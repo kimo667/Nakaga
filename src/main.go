@@ -56,7 +56,7 @@ func main() {
 	// Remplace "Kimo" par ton prénom si tu veux.
 	c1 := initCharacter(
 		"Kimo",
-		ClasseElfe,                         // Classe: Elfe
+		ClasseSamurai,                      // Classe: Samurai
 		1,                                  // Niveau: 1
 		100,                                // PV max: 100
 		40,                                 // PV actuels: 40
