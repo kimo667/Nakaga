@@ -334,4 +334,4 @@ func main() {
 	for mainMenu(&c, reader) {
 		IsDead(&c) // revive auto si besoin, on continue le jeu
 	}
-}
+}  "coucou"
