@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strings"
 )
 
 type Classe string
@@ -12,17 +15,16 @@ const (
 	ClasseNinja   Classe = "Ninja"
 )
 
-// TÂCHE 1 : structure Character
 type Character struct {
 	Name      string
 	Class     Classe
 	Level     int
 	HPMax     int
 	HP        int
-	Inventory map[string]int // inventaire simple: nom d'objet -> quantité
+	Inventory map[string]int
 }
 
-// TÂCHE 2 : initCharacter
+// Initialisation du personnage
 func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[string]int) Character {
 	return Character{
 		Name:      name,
@@ -34,7 +36,7 @@ func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[stri
 	}
 }
 
-// TÂCHE 3 : displayInfo
+// Affichage info + ASCII art
 func displayInfo(c Character) {
 	asciiArt := `
 ⠀⠀⠀⢰⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -53,16 +55,8 @@ func displayInfo(c Character) {
 ⠀⣀⣀⣠⣶⣿⣿⣿⣿⡿⠟⣼⣿⡿⣟⣿⡇⠀⠙⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⡼⣿⣿⣿⢟⣿⣿⣿⣷⡿⠿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠉⠁⠀⢉⣭⣭⣽⣯⣿⣿⢿⣫⣮⣅⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⢀⣿⣟⣽⣿⣿⣿⣿⣾⣿⣿⣯⡛⠻⢷⣶⣤⣄⡀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⢀⡞⣾⣿⣿⣿⣿⡟⣿⣿⣽⣿⣿⡿⠀⠀⠀⠈⠙⠛⠿⣶⣤⣄⡀⠀⠀
-⠀⠀⠀⣾⣸⣿⣿⣷⣿⣿⢧⣿⣿⣿⣿⣿⣷⠁⠀⠀⠀⠀⠀⠀⠀⠈⠙⠻⢷⣦
-⠀⠀⠀⡿⣛⣛⣛⣛⣿⣿⣸⣿⣿⣿⣻⣿⣿⠆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⢸⡇⣿⣿⣿⣿⣿⡏⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⢰⣶⣶⣶⣾⣿⢃⣿⣿⣿⣿⣯⣿⣭⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 `
-	// D’abord on affiche l’ASCII art
 	fmt.Println(asciiArt)
-
 	fmt.Println("=== Informations du personnage ===")
 	fmt.Printf("Nom   : %s\n", c.Name)
 	fmt.Printf("Classe: %s\n", c.Class)
@@ -78,17 +72,66 @@ func displayInfo(c Character) {
 	}
 }
 
-func main() {
-	// TÂCHE 2 : initialisation demandée par l’énoncé
-	c1 := initCharacter(
-		"Yazu",
-		ClasseSamurai,                      // Classe: Samurai
-		1,                                  // Niveau: 1
-		100,                                // PV max: 100
-		40,                                 // PV actuels: 40
-		map[string]int{"Potion de vie": 3}, // Inventaire: 3 potions
-	)
+// Utiliser une potion
+func TakePot(c *Character) {
+	if qty, ok := c.Inventory["Potion de vie"]; ok && qty > 0 {
+		c.HP += 20
+		if c.HP > c.HPMax {
+			c.HP = c.HPMax
+		}
+		c.Inventory["Potion de vie"]--
+		fmt.Println("Potion utilisée ! PV =", c.HP)
+		return
+	}
+	fmt.Println("Pas de potion dans l'inventaire !")
+}
 
-	// TÂCHE 3 : affichage
-	displayInfo(c1)
+// Ouvrir l'inventaire
+func OpenInventory(c Character) {
+	if len(c.Inventory) == 0 {
+		fmt.Println("L'inventaire est vide.")
+		return
+	}
+
+	fmt.Println("Inventaire :")
+	for item, qty := range c.Inventory {
+		fmt.Printf("  - %s x%d\n", item, qty)
+	}
+}
+
+// Vérifier si mort
+func IsDead(c Character) bool {
+	return c.HP <= 0
+}
+
+func main() {
+	c := initCharacter("Yazuo", ClasseSamurai, 1, 100, 40, map[string]int{"Potion de vie": 3})
+
+	displayInfo(c)
+
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Print("\nCommande > ")
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(strings.ToLower(input))
+
+		switch input {
+		case "take pot":
+			TakePot(&c)
+		case "open inventory":
+			OpenInventory(c)
+		case "status":
+			displayInfo(c)
+		case "exit":
+			fmt.Println("Au revoir !")
+			return
+		default:
+			fmt.Println("Commande inconnue. Commandes valides : 'take pot', 'open inventory', 'status', 'exit'")
+		}
+
+		if IsDead(c) {
+			fmt.Println("Wasted ! Le personnage est mort.")
+			return
+		}
+	}
 }
