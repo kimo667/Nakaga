@@ -23,6 +23,7 @@ type Character struct {
 	HPMax     int
 	HP        int
 	Inventory map[string]int
+	Skills    []string // liste de techniques/sorts
 }
 
 // ==== Utils inventaire ====
@@ -51,17 +52,48 @@ func removeInventory(c *Character, item string, qty int) bool {
 	return true
 }
 
-// ==== Initialisation du personnage ====
+// ==== Utils skills ====
 
+func hasSkill(c Character, spell string) bool {
+	for _, s := range c.Skills {
+		if s == spell {
+			return true
+		}
+	}
+	return false
+}
+
+func learnSkill(c *Character, spell string) bool {
+	if hasSkill(*c, spell) {
+		return false
+	}
+	c.Skills = append(c.Skills, spell)
+	return true
+}
+
+// Apprendre "Mur de vent" via livre
+func spellBook(c *Character) {
+	if learnSkill(c, "Mur de vent") {
+		fmt.Println("Vous avez appris : Mur de vent !")
+	} else {
+		fmt.Println("Vous connaissez déjà : Mur de vent.")
+	}
+}
+
+// ==== Initialisation du personnage ====
+// Ajoute automatiquement la technique de base "Tempête d'acier"
 func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[string]int) Character {
-	return Character{
+	ch := Character{
 		Name:      name,
 		Class:     class,
 		Level:     level,
 		HPMax:     hpMax,
 		HP:        hp,
 		Inventory: inv,
+		Skills:    []string{},
 	}
+	learnSkill(&ch, "Tempête d'acier")
+	return ch
 }
 
 // ==== Affichage info + ASCII art ====
@@ -105,6 +137,14 @@ func displayInfo(c Character) {
 			fmt.Printf("  - %s x%d\n", item, qty)
 		}
 	}
+	fmt.Println("Compétences :")
+	if len(c.Skills) == 0 {
+		fmt.Println("  (aucune technique)")
+	} else {
+		for _, s := range c.Skills {
+			fmt.Printf("  - %s\n", s)
+		}
+	}
 }
 
 // ==== Consommables ====
@@ -122,6 +162,7 @@ func TakePot(c *Character) {
 }
 
 // TÂCHE 9 : Potion de poison — inflige 10 dégâts par seconde pendant 3s
+// Stoppe l'effet si mort (après revive T8)
 func PoisonPot(c *Character) {
 	if !removeInventory(c, "Potion de poison", 1) {
 		fmt.Println("Vous n'avez pas de Potion de poison.")
@@ -135,7 +176,7 @@ func PoisonPot(c *Character) {
 		}
 		fmt.Printf("Effet poison %d/3 → PV: %d/%d\n", i, c.HP, c.HPMax)
 
-		// Vérifie si mort → revive + stop poison
+		// Mort → revive 50% (T8) puis on arrête le poison
 		if IsDead(c) {
 			fmt.Println("L'effet du poison est interrompu suite à votre mort.")
 			return
@@ -143,8 +184,24 @@ func PoisonPot(c *Character) {
 
 		time.Sleep(1 * time.Second)
 	}
-	// ✅ Affichage final après la fin de l'effet
 	fmt.Printf("L'effet du poison est terminé. PV restants : %d/%d\n", c.HP, c.HPMax)
+}
+
+// Utiliser le Livre de Sort : Mur de vent
+func UseSpellBookWind(c *Character) {
+	// Possession ?
+	if c.Inventory["Livre de Sort : Mur de vent"] <= 0 {
+		fmt.Println("Vous n'avez pas de 'Livre de Sort : Mur de vent'.")
+		return
+	}
+	// Déjà connue ?
+	if hasSkill(*c, "Mur de vent") {
+		fmt.Println("Vous connaissez déjà 'Mur de vent'. Le livre n'a pas été consommé.")
+		return
+	}
+	// Consomme l'item puis apprend la technique
+	removeInventory(c, "Livre de Sort : Mur de vent", 1)
+	spellBook(c)
 }
 
 // ==== Inventaire ====
@@ -161,8 +218,7 @@ func OpenInventory(c Character) {
 }
 
 // ==== Statut ====
-
-// TÂCHE 8 : si HP <= 0 -> WASTED + revive à 50% PV max (et on continue le jeu)
+// TÂCHE 8 : si HP <= 0 -> WASTED + revive à 50% PV max (continuer le jeu)
 func IsDead(c *Character) bool {
 	if c.HP <= 0 {
 		fmt.Println("\n*** WASTED ***")
@@ -189,13 +245,16 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 		OpenInventory(*c)
 		fmt.Println("\n1) Boire une RedBull (+20 PV)")
 		fmt.Println("2) Utiliser une Potion de poison (10 dmg/s ×3)")
+		fmt.Println("3) Utiliser 'Livre de Sort : Mur de vent'")
 		fmt.Println("9) Retour")
 		switch readChoice(r) {
 		case "1":
 			TakePot(c)
-			IsDead(c) // le perso revive à 50%, on CONTINUE le jeu
+			IsDead(c) // revive si besoin
 		case "2":
 			PoisonPot(c)
+		case "3":
+			UseSpellBookWind(c)
 		case "9", "retour", "back":
 			return
 		default:
@@ -205,8 +264,8 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 }
 
 // ==== Marchand ====
-
-var redbullAvailable = true // disponibilité RedBull gratuite
+// RedBull gratuite une fois
+var redbullAvailable = true
 
 func merchantMenu(c *Character, r *bufio.Reader) {
 	for {
@@ -217,7 +276,9 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 			fmt.Println("1) RedBull — (ÉPUISÉ)")
 		}
 		fmt.Println("2) Potion de poison — GRATUIT (temporaire)")
+		fmt.Println("3) Livre de Sort : Mur de vent — 0 or (GRATUIT)")
 		fmt.Println("9) Retour")
+
 		switch readChoice(r) {
 		case "1":
 			if redbullAvailable {
@@ -230,6 +291,9 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 		case "2":
 			addInventory(c, "Potion de poison", 1)
 			fmt.Printf("Achat effectué ! Vous avez obtenu : Potion de poison (total: %d)\n", c.Inventory["Potion de poison"])
+		case "3":
+			addInventory(c, "Livre de Sort : Mur de vent", 1)
+			fmt.Println("Achat effectué ! Vous avez obtenu : Livre de Sort : Mur de vent")
 		case "9", "retour", "back":
 			return
 		default:
@@ -265,13 +329,13 @@ func mainMenu(c *Character, r *bufio.Reader) bool {
 
 func main() {
 	c := initCharacter("Yazuo", ClasseSamurai, 1, 100, 40, map[string]int{
-		"RedBull":          3,
-		"Potion de poison": 0, // tu peux laisser 0; on en récupère chez le marchand
+		"RedBull":                     3,
+		"Potion de poison":            0,
+		"Livre de Sort : Mur de vent": 0,
 	})
-
 	reader := bufio.NewReader(os.Stdin)
 
 	for mainMenu(&c, reader) {
-		IsDead(&c) // pas besoin de quitter : on revive et on continue
+		IsDead(&c) // revive auto si besoin, on continue le jeu
 	}
 }
