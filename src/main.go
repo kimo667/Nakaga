@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 type Classe string
@@ -120,6 +121,32 @@ func TakePot(c *Character) {
 	fmt.Println("Pas de RedBull dans l'inventaire !")
 }
 
+// TÂCHE 9 : Potion de poison — inflige 10 dégâts par seconde pendant 3s
+func PoisonPot(c *Character) {
+	if !removeInventory(c, "Potion de poison", 1) {
+		fmt.Println("Vous n'avez pas de Potion de poison.")
+		return
+	}
+	fmt.Println("Vous utilisez une Potion de poison…")
+	for i := 1; i <= 3; i++ {
+		c.HP -= 10
+		if c.HP < 0 {
+			c.HP = 0
+		}
+		fmt.Printf("Effet poison %d/3 → PV: %d/%d\n", i, c.HP, c.HPMax)
+
+		// Vérifie si mort → revive + stop poison
+		if IsDead(c) {
+			fmt.Println("L'effet du poison est interrompu suite à votre mort.")
+			return
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+	// ✅ Affichage final après la fin de l'effet
+	fmt.Printf("L'effet du poison est terminé. PV restants : %d/%d\n", c.HP, c.HPMax)
+}
+
 // ==== Inventaire ====
 
 func OpenInventory(c Character) {
@@ -161,12 +188,14 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 		fmt.Println("\n--- INVENTAIRE ---")
 		OpenInventory(*c)
 		fmt.Println("\n1) Boire une RedBull (+20 PV)")
+		fmt.Println("2) Utiliser une Potion de poison (10 dmg/s ×3)")
 		fmt.Println("9) Retour")
 		switch readChoice(r) {
 		case "1":
 			TakePot(c)
-			IsDead(c) // le perso revive à 50%, on CONTINUE le jeu (pas d'exit)
-
+			IsDead(c) // le perso revive à 50%, on CONTINUE le jeu
+		case "2":
+			PoisonPot(c)
 		case "9", "retour", "back":
 			return
 		default:
@@ -187,6 +216,7 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 		} else {
 			fmt.Println("1) RedBull — (ÉPUISÉ)")
 		}
+		fmt.Println("2) Potion de poison — GRATUIT (temporaire)")
 		fmt.Println("9) Retour")
 		switch readChoice(r) {
 		case "1":
@@ -197,6 +227,9 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 			} else {
 				fmt.Println("La RedBull gratuite n’est plus disponible.")
 			}
+		case "2":
+			addInventory(c, "Potion de poison", 1)
+			fmt.Printf("Achat effectué ! Vous avez obtenu : Potion de poison (total: %d)\n", c.Inventory["Potion de poison"])
 		case "9", "retour", "back":
 			return
 		default:
@@ -232,7 +265,8 @@ func mainMenu(c *Character, r *bufio.Reader) bool {
 
 func main() {
 	c := initCharacter("Yazuo", ClasseSamurai, 1, 100, 40, map[string]int{
-		"RedBull": 3,
+		"RedBull":          3,
+		"Potion de poison": 0, // tu peux laisser 0; on en récupère chez le marchand
 	})
 
 	reader := bufio.NewReader(os.Stdin)
@@ -240,5 +274,4 @@ func main() {
 	for mainMenu(&c, reader) {
 		IsDead(&c) // pas besoin de quitter : on revive et on continue
 	}
-
 }
