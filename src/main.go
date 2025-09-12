@@ -74,16 +74,16 @@ func displayInfo(c Character) {
 
 // Utiliser une potion
 func TakePot(c *Character) {
-	if qty, ok := c.Inventory["Potion de vie"]; ok && qty > 0 {
+	if qty, ok := c.Inventory["RedBull"]; ok && qty > 0 {
 		c.HP += 20
 		if c.HP > c.HPMax {
 			c.HP = c.HPMax
 		}
-		c.Inventory["Potion de vie"]--
-		fmt.Println("Potion utilisée ! PV =", c.HP)
+		c.Inventory["RedBull"]--
+		fmt.Println("RedBull ! PV =", c.HP)
 		return
 	}
-	fmt.Println("Pas de potion dans l'inventaire !")
+	fmt.Println("Pas de RedBull dans l'inventaire !")
 }
 
 // Ouvrir l'inventaire
@@ -105,7 +105,7 @@ func IsDead(c Character) bool {
 }
 
 func main() {
-	c := initCharacter("Yazuo", ClasseSamurai, 1, 100, 40, map[string]int{"Potion de vie": 3})
+	c := initCharacter("Yazuo", ClasseSamurai, 1, 100, 40, map[string]int{"RedBull": 3})
 
 	displayInfo(c)
 
@@ -116,17 +116,17 @@ func main() {
 		input = strings.TrimSpace(strings.ToLower(input))
 
 		switch input {
-		case "take pot":
+		case "boire une redbull":
 			TakePot(&c)
-		case "open inventory":
+		case "ouvrir l'inventaire":
 			OpenInventory(c)
-		case "status":
+		case "information":
 			displayInfo(c)
-		case "exit":
+		case "quitter":
 			fmt.Println("Au revoir !")
 			return
 		default:
-			fmt.Println("Commande inconnue. Commandes valides : 'take pot', 'open inventory', 'status', 'exit'")
+			fmt.Println("Commande inconnue. Commandes valides : 'boire une redbull', 'ouvrir l'inventaire', 'information', 'quitter'")
 		}
 
 		if IsDead(c) {
