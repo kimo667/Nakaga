@@ -55,7 +55,7 @@ func main() {
 	// TÂCHE 2 : initialisation demandée par l’énoncé
 	// Remplace "Kimo" par ton prénom si tu veux.
 	c1 := initCharacter(
-		"Kimo",
+		"Yazuo",
 		ClasseSamurai,                      // Classe: Samurai
 		1,                                  // Niveau: 1
 		100,                                // PV max: 100
