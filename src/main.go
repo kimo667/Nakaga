@@ -24,7 +24,34 @@ type Character struct {
 	Inventory map[string]int
 }
 
-// Initialisation du personnage
+// ==== Utils inventaire ====
+
+func addInventory(c *Character, item string, qty int) {
+	if qty <= 0 {
+		return
+	}
+	if c.Inventory == nil {
+		c.Inventory = make(map[string]int)
+	}
+	c.Inventory[item] += qty
+}
+
+func removeInventory(c *Character, item string, qty int) bool {
+	cur, ok := c.Inventory[item]
+	if !ok || qty <= 0 || cur < qty {
+		return false
+	}
+	newQty := cur - qty
+	if newQty == 0 {
+		delete(c.Inventory, item)
+	} else {
+		c.Inventory[item] = newQty
+	}
+	return true
+}
+
+// ==== Initialisation du personnage ====
+
 func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[string]int) Character {
 	return Character{
 		Name:      name,
@@ -36,25 +63,14 @@ func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[stri
 	}
 }
 
-// Affichage info + ASCII art
+// ==== Affichage info + ASCII art ====
+
 func displayInfo(c Character) {
 	asciiArt := `
 ⠀⠀⠀⢰⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠘⡇⠀⠀⠀⢠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⢷⠀⢠⢣⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⢘⣷⢸⣾⣇⣶⣦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⣿⣿⣿⣹⣿⣿⣷⣿⣆⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⢼⡇⣿⣿⣽⣶⣶⣯⣭⣷⣶⣿⣿⣶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠸⠣⢿⣿⣿⣿⣿⡿⣛⣭⣭⣭⡙⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⠿⠿⠿⢯⡛⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣾⣿⡿⡷⢿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⡔⣺⣿⣿⣽⡿⣿⣿⣿⣟⡳⠦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⢠⣭⣾⣿⠃⣿⡇⣿⣿⡷⢾⣭⡓⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⣾⣿⡿⠷⣿⣿⡇⣿⣿⣟⣻⠶⣭⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⣋⣵⣞⣭⣮⢿⣧⣝⣛⡛⠿⢿⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⣀⣀⣠⣶⣿⣿⣿⣿⡿⠟⣼⣿⡿⣟⣿⡇⠀⠙⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⡼⣿⣿⣿⢟⣿⣿⣿⣷⡿⠿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠉⠁⠀⢉⣭⣭⣽⣯⣿⣿⢿⣫⣮⣅⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 `
 	fmt.Println(asciiArt)
 	fmt.Println("=== Informations du personnage ===")
@@ -72,63 +88,131 @@ func displayInfo(c Character) {
 	}
 }
 
-// Utiliser une potion
+// ==== Consommables ====
+
 func TakePot(c *Character) {
-	if qty, ok := c.Inventory["RedBull"]; ok && qty > 0 {
+	if removeInventory(c, "RedBull", 1) {
 		c.HP += 20
 		if c.HP > c.HPMax {
 			c.HP = c.HPMax
 		}
-		c.Inventory["RedBull"]--
-		fmt.Println("RedBull ! PV =", c.HP)
+		fmt.Println("Tu as bu une RedBull ! PV =", c.HP)
 		return
 	}
 	fmt.Println("Pas de RedBull dans l'inventaire !")
 }
 
-// Ouvrir l'inventaire
+// ==== Inventaire ====
+
 func OpenInventory(c Character) {
 	if len(c.Inventory) == 0 {
 		fmt.Println("L'inventaire est vide.")
 		return
 	}
-
 	fmt.Println("Inventaire :")
 	for item, qty := range c.Inventory {
 		fmt.Printf("  - %s x%d\n", item, qty)
 	}
 }
 
-// Vérifier si mort
-func IsDead(c Character) bool {
-	return c.HP <= 0
+// ==== Statut ====
+
+func IsDead(c Character) bool { return c.HP <= 0 }
+
+// ==== Lecture entrée ====
+
+func readChoice(r *bufio.Reader) string {
+	fmt.Print("> ")
+	line, _ := r.ReadString('\n')
+	return strings.TrimSpace(strings.ToLower(line))
+}
+
+// ==== Sous-menu Inventaire ====
+
+func inventoryMenu(c *Character, r *bufio.Reader) {
+	for {
+		fmt.Println("\n--- INVENTAIRE ---")
+		OpenInventory(*c)
+		fmt.Println("\n1) Boire une RedBull (+20 PV)")
+		fmt.Println("9) Retour")
+		switch readChoice(r) {
+		case "1":
+			TakePot(c)
+			if IsDead(*c) {
+				fmt.Println("Wasted ! Le personnage est mort.")
+				os.Exit(0)
+			}
+		case "9", "retour", "back":
+			return
+		default:
+			fmt.Println("Choix invalide.")
+		}
+	}
+}
+
+// ==== Marchand ====
+
+var redbullAvailable = true // disponibilité RedBull gratuite
+
+func merchantMenu(c *Character, r *bufio.Reader) {
+	for {
+		fmt.Println("\n=== MARCHAND ===")
+		if redbullAvailable {
+			fmt.Println("1) RedBull — GRATUIT")
+		} else {
+			fmt.Println("1) RedBull — (ÉPUISÉ)")
+		}
+		fmt.Println("9) Retour")
+		switch readChoice(r) {
+		case "1":
+			if redbullAvailable {
+				addInventory(c, "RedBull", 1)
+				redbullAvailable = false
+				fmt.Printf("Achat effectué ! Vous avez obtenu : RedBull (total: %d)\n", c.Inventory["RedBull"])
+			} else {
+				fmt.Println("La RedBull gratuite n’est plus disponible.")
+			}
+		case "9", "retour", "back":
+			return
+		default:
+			fmt.Println("Choix invalide.")
+		}
+	}
+}
+
+// ==== Menu principal ====
+
+func mainMenu(c *Character, r *bufio.Reader) bool {
+	fmt.Println("\n===== MENU =====")
+	fmt.Println("1) Afficher les informations du personnage")
+	fmt.Println("2) Accéder au contenu de l’inventaire")
+	fmt.Println("3) Marchand")
+	fmt.Println("4) Quitter")
+
+	switch readChoice(r) {
+	case "1", "infos", "information":
+		displayInfo(*c)
+	case "2", "inventaire":
+		inventoryMenu(c, r)
+	case "3", "marchand", "shop":
+		merchantMenu(c, r)
+	case "4", "q", "quit", "quitter":
+		fmt.Println("Au revoir !")
+		return false
+	default:
+		fmt.Println("Choix invalide.")
+	}
+	return true
 }
 
 func main() {
-	c := initCharacter("Yazuo", ClasseSamurai, 1, 100, 40, map[string]int{"RedBull": 3})
-
-	displayInfo(c)
+	c := initCharacter("Yazuo", ClasseSamurai, 1, 100, 40, map[string]int{
+		"RedBull": 3,
+	})
 
 	reader := bufio.NewReader(os.Stdin)
-	for {
-		fmt.Print("\nCommande > ")
-		input, _ := reader.ReadString('\n')
-		input = strings.TrimSpace(strings.ToLower(input))
 
-		switch input {
-		case "boire une redbull":
-			TakePot(&c)
-		case "ouvrir l'inventaire":
-			OpenInventory(c)
-		case "information":
-			displayInfo(c)
-		case "quitter":
-			fmt.Println("Au revoir !")
-			return
-		default:
-			fmt.Println("Commande inconnue. Commandes valides : 'boire une redbull', 'ouvrir l'inventaire', 'information', 'quitter'")
-		}
-
+	for mainMenu(&c, reader) {
 		if IsDead(c) {
 			fmt.Println("Wasted ! Le personnage est mort.")
 			return
