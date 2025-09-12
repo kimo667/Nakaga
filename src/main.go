@@ -22,6 +22,7 @@ type Character struct {
 	HPMax     int
 	HP        int
 	Inventory map[string]int
+	Skills    []string // <= liste de sorts
 }
 
 // ==== Utils inventaire ====
@@ -50,17 +51,48 @@ func removeInventory(c *Character, item string, qty int) bool {
 	return true
 }
 
-// ==== Initialisation du personnage ====
+// ==== Utils skills ====
 
+func hasSkill(c Character, spell string) bool {
+	for _, s := range c.Skills {
+		if s == spell {
+			return true
+		}
+	}
+	return false
+}
+
+func learnSkill(c *Character, spell string) bool {
+	if hasSkill(*c, spell) {
+		return false
+	}
+	c.Skills = append(c.Skills, spell)
+	return true
+}
+
+// spellBook: apprend "Mur de vent" (une seule fois)
+func spellBook(c *Character) {
+	if learnSkill(c, "Boule de feu") {
+		fmt.Println("Vous avez appris : Mur de vent !")
+	} else {
+		fmt.Println("Vous connaissez déjà : Mur de vent.")
+	}
+}
+
+// ==== Initialisation du personnage ====
+// Ajoute automatiquement le sort de base "Tempete d'acier"
 func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[string]int) Character {
-	return Character{
+	ch := Character{
 		Name:      name,
 		Class:     class,
 		Level:     level,
 		HPMax:     hpMax,
 		HP:        hp,
 		Inventory: inv,
+		Skills:    []string{},
 	}
+	learnSkill(&ch, "Tempête d'acier")
+	return ch
 }
 
 // ==== Affichage info + ASCII art ====
@@ -104,6 +136,15 @@ func displayInfo(c Character) {
 			fmt.Printf("  - %s x%d\n", item, qty)
 		}
 	}
+	// Afficher les skills
+	fmt.Println("Compétences :")
+	if len(c.Skills) == 0 {
+		fmt.Println("  (aucun sort)")
+	} else {
+		for _, s := range c.Skills {
+			fmt.Printf("  - %s\n", s)
+		}
+	}
 }
 
 // ==== Consommables ====
@@ -120,6 +161,23 @@ func TakePot(c *Character) {
 	fmt.Println("Pas de RedBull dans l'inventaire !")
 }
 
+// Utiliser le Livre de Sort : Mur de vent
+func UseSpellBookFireball(c *Character) {
+	// Vérifie la possession
+	if c.Inventory["Livre de Sort : Mur de vent"] <= 0 {
+		fmt.Println("Vous n'avez pas de 'Livre de Sort : Mur de vent'.")
+		return
+	}
+	// Si déjà connu, ne pas consommer l'item
+	if hasSkill(*c, "Mur de vent") {
+		fmt.Println("Vous connaissez déjà 'Mur de vent'. Le livre n'a pas été consommé.")
+		return
+	}
+	// Consomme l'item puis apprend le sort
+	removeInventory(c, "Livre de Sort : Mur de vent", 1)
+	spellBook(c)
+}
+
 // ==== Inventaire ====
 
 func OpenInventory(c Character) {
@@ -134,8 +192,7 @@ func OpenInventory(c Character) {
 }
 
 // ==== Statut ====
-
-// TÂCHE 8 : si HP <= 0 -> WASTED + revive à 50% PV max (et on continue le jeu)
+// TÂCHE 8 : si HP <= 0 -> WASTED + revive à 50% PV max (continuer le jeu)
 func IsDead(c *Character) bool {
 	if c.HP <= 0 {
 		fmt.Println("\n*** WASTED ***")
@@ -161,12 +218,14 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 		fmt.Println("\n--- INVENTAIRE ---")
 		OpenInventory(*c)
 		fmt.Println("\n1) Boire une RedBull (+20 PV)")
+		fmt.Println("2) Utiliser 'Livre de Sort : Mur de vent'")
 		fmt.Println("9) Retour")
 		switch readChoice(r) {
 		case "1":
 			TakePot(c)
-			IsDead(c) // le perso revive à 50%, on CONTINUE le jeu (pas d'exit)
-
+			IsDead(c)
+		case "2":
+			UseSpellBookFireball(c)
 		case "9", "retour", "back":
 			return
 		default:
@@ -176,8 +235,8 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 }
 
 // ==== Marchand ====
-
-var redbullAvailable = true // disponibilité RedBull gratuite
+// RedBull gratuite une fois
+var redbullAvailable = true
 
 func merchantMenu(c *Character, r *bufio.Reader) {
 	for {
@@ -187,7 +246,9 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 		} else {
 			fmt.Println("1) RedBull — (ÉPUISÉ)")
 		}
+		fmt.Println("2) Livre de Sort : Mur de vent — 0 or (GRATUIT)")
 		fmt.Println("9) Retour")
+
 		switch readChoice(r) {
 		case "1":
 			if redbullAvailable {
@@ -197,6 +258,9 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 			} else {
 				fmt.Println("La RedBull gratuite n’est plus disponible.")
 			}
+		case "2":
+			addInventory(c, "Livre de Sort : Mur de vent", 1)
+			fmt.Println("Achat effectué ! Vous avez obtenu : Livre de Sort : Mur de vent")
 		case "9", "retour", "back":
 			return
 		default:
@@ -232,13 +296,11 @@ func mainMenu(c *Character, r *bufio.Reader) bool {
 
 func main() {
 	c := initCharacter("Yazuo", ClasseSamurai, 1, 100, 40, map[string]int{
-		"RedBull": 3,
+		"RedBull": 3, // le perso a déjà 3 RedBull de base
 	})
-
 	reader := bufio.NewReader(os.Stdin)
 
 	for mainMenu(&c, reader) {
-		IsDead(&c) // pas besoin de quitter : on revive et on continue
+		IsDead(&c) // revive auto si besoin, on continue le jeu
 	}
-
 }
