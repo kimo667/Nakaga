@@ -98,8 +98,8 @@ func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[stri
 // ==== Affichage info + ASCII art ====
 
 func displayInfo(c Character) {
-	asciiArt := `
-⠀⠀⠀⠀⠀⠀⢰⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+	asciiArt := `\033[31m4)
+⠀⠀⠀⢰⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠘⡇⠀⠀⠀⢠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⢷⠀⢠⢣⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⢘⣷⢸⣾⣇⣶⣦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -121,7 +121,7 @@ func displayInfo(c Character) {
 ⠀⠀⠀⡿⣛⣛⣛⣛⣿⣿⣸⣿⣿⣿⣻⣿⣿⠆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⢸⡇⣿⣿⣿⣿⣿⡏⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⢰⣶⣶⣶⣾⣿⢃⣿⣿⣿⣿⣯⣿⣭⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-`
+\u001B[0m`
 	fmt.Println(asciiArt)
 	fmt.Println("=== Informations du personnage ===")
 	fmt.Printf("Nom   : %s\n", c.Name)
@@ -156,20 +156,20 @@ func TakePot(c *Character) {
 		if c.HP > c.HPMax {
 			c.HP = c.HPMax
 		}
-		fmt.Println("Tu as bu une RedBull ! PV =", c.HP)
+		fmt.Println(" \033[36mTu as bu une RedBull ! PV = \uu01B[0m", c.HP)
 		return
 	}
-	fmt.Println("Pas de RedBull dans l'inventaire !")
+	fmt.Println("\033[31mPas de RedBull dans l'inventaire ! \uu01B[0m")
 }
 
 // TÂCHE 9 : Potion de poison — 10 dégâts par seconde ×3
 // S'arrête immédiatement si mort (après revive T8)
 func PoisonPot(c *Character) {
 	if !removeInventory(c, "Potion de poison", 1) {
-		fmt.Println("Vous n'avez pas de Potion de poison.")
+		fmt.Println("\033[31mVous n'avez pas de Potion de poison. \uu01B[0m")
 		return
 	}
-	fmt.Println("Vous utilisez une Potion de poison…")
+	fmt.Println("\033[36mVous utilisez une Potion de poison… \uu01B[0m")
 	for i := 1; i <= 3; i++ {
 		c.HP -= 10
 		if c.HP < 0 {
@@ -178,12 +178,12 @@ func PoisonPot(c *Character) {
 		fmt.Printf("Effet poison %d/3 → PV: %d/%d\n", i, c.HP, c.HPMax)
 
 		if IsDead(c) {
-			fmt.Println("L'effet du poison est interrompu suite à votre mort.")
+			fmt.Println("\033[31mL'effet du poison est interrompu suite à votre mort. \uu01B[0m")
 			return
 		}
 		time.Sleep(1 * time.Second)
 	}
-	fmt.Printf("L'effet du poison est terminé. PV restants : %d/%d\n", c.HP, c.HPMax)
+	fmt.Printf("\033[36mL'effet du poison est terminé. PV restants : %d/%d\n \uu01B[0m", c.HP, c.HPMax)
 }
 
 // Utiliser le Livre : Mur de vent
@@ -204,10 +204,10 @@ func UseSpellBookWind(c *Character) {
 
 func OpenInventory(c Character) {
 	if len(c.Inventory) == 0 {
-		fmt.Println("L'inventaire est vide.")
+		fmt.Println("\033[31mL'inventaire est vide. \uu01B[0m")
 		return
 	}
-	fmt.Println("Inventaire :")
+	fmt.Println("\033[33mInventaire : \uu01B[0m")
 	for item, qty := range c.Inventory {
 		fmt.Printf("  - %s x%d\n", item, qty)
 	}
@@ -301,11 +301,11 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 // ==== Menu principal ====
 
 func mainMenu(c *Character, r *bufio.Reader) bool {
-	fmt.Println("\n===== MENU =====")
-	fmt.Println("1) Afficher les informations du personnage")
-	fmt.Println("2) Accéder au contenu de l’inventaire")
-	fmt.Println("3) Marchand")
-	fmt.Println("4) Quitter")
+	fmt.Println("\n\033[1;33m===== MENU =====\033[0m")
+	fmt.Println("\033[36m1) Afficher les informations du personnage \u001B[0m")
+	fmt.Println("\033[36m2) Accéder au contenu de l’inventaire \u001B[0m")
+	fmt.Println("\033[36m3) Marchand \u001B[0m")
+	fmt.Println("\033[31m4) Quitter \u001B[0m")
 
 	switch readChoice(r) {
 	case "1", "infos", "information":
