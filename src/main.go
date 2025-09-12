@@ -156,20 +156,20 @@ func TakePot(c *Character) {
 		if c.HP > c.HPMax {
 			c.HP = c.HPMax
 		}
-		fmt.Println(" \033[36mTu as bu une RedBull ! PV = \uu01B[0m", c.HP)
+		fmt.Println(" \033[36mTu as bu une RedBull ! PV = \u001B[0m", c.HP)
 		return
 	}
-	fmt.Println("\033[31mPas de RedBull dans l'inventaire ! \uu01B[0m")
+	fmt.Println("\033[31mPas de RedBull dans l'inventaire ! \u001B[0m")
 }
 
 // TÂCHE 9 : Potion de poison — 10 dégâts par seconde ×3
 // S'arrête immédiatement si mort (après revive T8)
 func PoisonPot(c *Character) {
 	if !removeInventory(c, "Potion de poison", 1) {
-		fmt.Println("\033[31mVous n'avez pas de Potion de poison. \uu01B[0m")
+		fmt.Println("\033[31mVous n'avez pas de Potion de poison. \u001B[0m")
 		return
 	}
-	fmt.Println("\033[36mVous utilisez une Potion de poison… \uu01B[0m")
+	fmt.Println("\033[36mVous utilisez une Potion de poison… \u001B[0m")
 	for i := 1; i <= 3; i++ {
 		c.HP -= 10
 		if c.HP < 0 {
@@ -178,12 +178,12 @@ func PoisonPot(c *Character) {
 		fmt.Printf("Effet poison %d/3 → PV: %d/%d\n", i, c.HP, c.HPMax)
 
 		if IsDead(c) {
-			fmt.Println("\033[31mL'effet du poison est interrompu suite à votre mort. \uu01B[0m")
+			fmt.Println("\033[31mL'effet du poison est interrompu suite à votre mort. \u001B[0m")
 			return
 		}
 		time.Sleep(1 * time.Second)
 	}
-	fmt.Printf("\033[36mL'effet du poison est terminé. PV restants : %d/%d\n \uu01B[0m", c.HP, c.HPMax)
+	fmt.Printf("\033[36mL'effet du poison est terminé. PV restants : %d/%d\n \u001B[0m", c.HP, c.HPMax)
 }
 
 // Utiliser le Livre : Mur de vent
@@ -204,10 +204,10 @@ func UseSpellBookWind(c *Character) {
 
 func OpenInventory(c Character) {
 	if len(c.Inventory) == 0 {
-		fmt.Println("\033[31mL'inventaire est vide. \uu01B[0m")
+		fmt.Println("\033[31mL'inventaire est vide. \u001B[0m")
 		return
 	}
-	fmt.Println("\033[33mInventaire : \uu01B[0m")
+	fmt.Println("\033[33mInventaire : \u001B[0m")
 	for item, qty := range c.Inventory {
 		fmt.Printf("  - %s x%d\n", item, qty)
 	}
