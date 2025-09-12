@@ -135,7 +135,16 @@ func OpenInventory(c Character) {
 
 // ==== Statut ====
 
-func IsDead(c Character) bool { return c.HP <= 0 }
+// TÂCHE 8 : si HP <= 0 -> WASTED + revive à 50% PV max (et on continue le jeu)
+func IsDead(c *Character) bool {
+	if c.HP <= 0 {
+		fmt.Println("\n*** WASTED ***")
+		c.HP = c.HPMax / 2
+		fmt.Printf("Vous êtes ressuscité avec %d/%d PV.\n", c.HP, c.HPMax)
+		return true
+	}
+	return false
+}
 
 // ==== Lecture entrée ====
 
@@ -156,10 +165,8 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 		switch readChoice(r) {
 		case "1":
 			TakePot(c)
-			if IsDead(*c) {
-				fmt.Println("Wasted ! Le personnage est mort.")
-				os.Exit(0)
-			}
+			IsDead(c) // le perso revive à 50%, on CONTINUE le jeu (pas d'exit)
+
 		case "9", "retour", "back":
 			return
 		default:
@@ -231,9 +238,7 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 
 	for mainMenu(&c, reader) {
-		if IsDead(c) {
-			fmt.Println("Wasted ! Le personnage est mort.")
-			return
-		}
+		IsDead(&c) // pas besoin de quitter : on revive et on continue
 	}
+
 }
