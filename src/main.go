@@ -7,9 +7,9 @@ import (
 type Classe string
 
 const (
-	ClasseHumain Classe = "Humain"
-	ClasseElfe   Classe = "Elfe"
-	ClasseNain   Classe = "Nain"
+	ClasseHumain  Classe = "Humain"
+	ClasseSamurai Classe = "Samurai"
+	ClasseNinja   Classe = "Ninja"
 )
 
 // TÂCHE 1 : structure Character
