@@ -26,41 +26,16 @@ type Character struct {
 	Skills    []string // techniques/sorts connus
 }
 
-// ===== Limite d'inventaire =====
-const MaxInventoryItems = 10
-
-// Compte le nombre total d'items (toutes quantités confondues)
-func totalItems(c Character) int {
-	n := 0
-	for _, q := range c.Inventory {
-		n += q
-	}
-	return n
-}
-
-// Vérifie si on peut ajouter qty items sans dépasser la limite
-func canCarry(c Character, qty int) bool {
-	return totalItems(c)+qty <= MaxInventoryItems
-}
-
 // ==== Utils inventaire ====
 
-// Retourne true si l'ajout a réussi (limite respectée)
-func addInventory(c *Character, item string, qty int) bool {
+func addInventory(c *Character, item string, qty int) {
 	if qty <= 0 {
-		return false
+		return
 	}
 	if c.Inventory == nil {
 		c.Inventory = make(map[string]int)
 	}
-	if !canCarry(*c, qty) {
-		fmt.Printf("Inventaire plein (%d/%d). Impossible d'ajouter %d x %s.\n",
-			totalItems(*c), MaxInventoryItems, qty, item)
-		return false
-	}
 	c.Inventory[item] += qty
-	fmt.Printf("Ajouté : %s x%d (%d/%d)\n", item, qty, totalItems(*c), MaxInventoryItems)
-	return true
 }
 
 func removeInventory(c *Character, item string, qty int) bool {
@@ -70,7 +45,7 @@ func removeInventory(c *Character, item string, qty int) bool {
 	}
 	newQty := cur - qty
 	if newQty == 0 {
-		delete(c.Inventory, item)
+		delete(c.Inventory, item) // garde la map propre (pas d'items à 0)
 	} else {
 		c.Inventory[item] = newQty
 	}
@@ -155,14 +130,17 @@ func displayInfo(c Character) {
 	fmt.Printf("PV    : %d / %d\n", c.HP, c.HPMax)
 
 	fmt.Println("Inventaire :")
-	if len(c.Inventory) == 0 {
-		fmt.Println("  (vide)")
-	} else {
-		for item, qty := range c.Inventory {
+	// CHANGEMENT: n'afficher que les items avec quantité > 0
+	shown := false
+	for item, qty := range c.Inventory {
+		if qty > 0 {
 			fmt.Printf("  - %s x%d\n", item, qty)
+			shown = true
 		}
 	}
-	fmt.Printf("Capacité inventaire : (%d/%d)\n", totalItems(c), MaxInventoryItems)
+	if !shown {
+		fmt.Println("  (vide)")
+	}
 
 	fmt.Println("Compétences :")
 	if len(c.Skills) == 0 {
@@ -228,17 +206,21 @@ func UseSpellBookWind(c *Character) {
 
 // ==== Inventaire ====
 
+// CHANGEMENT: n'afficher que les items de quantité > 0
 func OpenInventory(c Character) {
-	if len(c.Inventory) == 0 {
-		fmt.Println("L'inventaire est vide.")
-		fmt.Printf("(0/%d)\n", MaxInventoryItems)
-		return
-	}
-	fmt.Println("Inventaire :")
+	shown := false
 	for item, qty := range c.Inventory {
-		fmt.Printf("  - %s x%d\n", item, qty)
+		if qty > 0 {
+			if !shown {
+				fmt.Println("Inventaire :")
+				shown = true
+			}
+			fmt.Printf("  - %s x%d\n", item, qty)
+		}
 	}
-	fmt.Printf("(%d/%d)\n", totalItems(c), MaxInventoryItems)
+	if !shown {
+		fmt.Println("L'inventaire est vide.")
+	}
 }
 
 // ==== Statut ====
@@ -267,21 +249,66 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 	for {
 		fmt.Println("\n--- INVENTAIRE ---")
 		OpenInventory(*c)
-		fmt.Println("\n1) Boire une RedBull (+20 PV)")
-		fmt.Println("2) Utiliser une Potion de poison (10 dmg/s ×3)")
-		fmt.Println("3) Utiliser 'Livre de Sort : Mur de vent'")
+
+		// Construction dynamique des actions disponibles selon l'inventaire
+		type opt struct {
+			key   string
+			label string
+			run   func()
+		}
+		opts := []opt{}
+		idx := 1
+		add := func(label string, fn func()) {
+			opts = append(opts, opt{
+				key:   fmt.Sprintf("%d", idx),
+				label: label,
+				run:   fn,
+			})
+			idx++
+		}
+
+		// Afficher les commandes SEULEMENT si l'objet est possédé (> 0)
+		if c.Inventory["RedBull"] > 0 {
+			add("Boire une RedBull (+20 PV)", func() {
+				TakePot(c)
+				IsDead(c)
+			})
+		}
+		if c.Inventory["Potion de poison"] > 0 {
+			add("Utiliser une Potion de poison (10 dmg/s ×3)", func() {
+				PoisonPot(c) // va décrémenter et potentiellement retirer l'entrée à 0
+			})
+		}
+		if c.Inventory["Livre de Sort : Mur de vent"] > 0 {
+			add("Utiliser 'Livre de Sort : Mur de vent'", func() {
+				UseSpellBookWind(c) // apprend le sort et consomme le livre
+			})
+		}
+
+		// Affichage du menu d'actions
+		if len(opts) == 0 {
+			fmt.Println("(Aucune action disponible)")
+		} else {
+			for _, o := range opts {
+				fmt.Printf("%s) %s\n", o.key, o.label)
+			}
+		}
 		fmt.Println("9) Retour")
-		switch readChoice(r) {
-		case "1":
-			TakePot(c)
-			IsDead(c)
-		case "2":
-			PoisonPot(c)
-		case "3":
-			UseSpellBookWind(c)
-		case "9", "retour", "back":
+
+		// Lecture et dispatch
+		choice := readChoice(r)
+		if choice == "9" || choice == "retour" || choice == "back" {
 			return
-		default:
+		}
+		handled := false
+		for _, o := range opts {
+			if choice == o.key {
+				o.run()
+				handled = true
+				break
+			}
+		}
+		if !handled {
 			fmt.Println("Choix invalide.")
 		}
 	}
@@ -305,28 +332,15 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 
 		switch readChoice(r) {
 		case "1":
-			if redbullAvailable {
-				if addInventory(c, "RedBull", 1) {
-					redbullAvailable = false
-					fmt.Printf("Achat effectué ! Vous avez obtenu : RedBull (total: %d)\n", c.Inventory["RedBull"])
-				} else {
-					fmt.Println("Libérez de la place dans l'inventaire pour obtenir la RedBull gratuite.")
-				}
-			} else {
-				fmt.Println("La RedBull gratuite n’est plus disponible.")
-			}
+			addInventory(c, "RedBull", 1)
+			redbullAvailable = false
+			fmt.Printf("Achat effectué ! Vous avez obtenu : RedBull (total: %d)\n", c.Inventory["RedBull"])
 		case "2":
-			if !addInventory(c, "Potion de poison", 1) {
-				fmt.Println("Libérez de la place dans l'inventaire pour acheter cette potion.")
-			} else {
-				fmt.Printf("Achat effectué ! Vous avez obtenu : Potion de poison (total: %d)\n", c.Inventory["Potion de poison"])
-			}
+			addInventory(c, "Potion de poison", 1)
+			fmt.Printf("Achat effectué ! Vous avez obtenu : Potion de poison (total: %d)\n", c.Inventory["Potion de poison"])
 		case "3":
-			if !addInventory(c, "Livre de Sort : Mur de vent", 1) {
-				fmt.Println("Libérez de la place dans l'inventaire pour acheter ce livre.")
-			} else {
-				fmt.Println("Achat effectué ! Vous avez obtenu : Livre de Sort : Mur de vent")
-			}
+			addInventory(c, "Livre de Sort : Mur de vent", 1)
+			fmt.Println("Achat effectué ! Vous avez obtenu : Livre de Sort : Mur de vent")
 		case "9", "retour", "back":
 			return
 		default:
@@ -361,10 +375,11 @@ func mainMenu(c *Character, r *bufio.Reader) bool {
 }
 
 func main() {
+	// CHANGEMENT: on n'initialise plus d'items à 0 -> ils n'apparaissent pas
 	c := initCharacter("Yazuo", ClasseSamurai, 1, 100, 40, map[string]int{
-		"RedBull":                     3,
-		"Potion de poison":            0,
-		"Livre de Sort : Mur de vent": 0,
+		"RedBull": 3,
+		// "Potion de poison": 0,
+		// "Livre de Sort : Mur de vent": 0,
 	})
 	reader := bufio.NewReader(os.Stdin)
 
