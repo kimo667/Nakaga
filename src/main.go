@@ -318,6 +318,9 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 // RedBull gratuite une fois
 var redbullAvailable = true
 
+// un seul livre de sort dispo
+var windBookAvailable = true
+
 func merchantMenu(c *Character, r *bufio.Reader) {
 	for {
 		fmt.Println("\n=== MARCHAND ===")
@@ -326,23 +329,44 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 		} else {
 			fmt.Println("1) RedBull — (ÉPUISÉ)")
 		}
+
 		fmt.Println("2) Potion de poison — GRATUIT (temporaire)")
-		fmt.Println("3) Livre de Sort : Mur de vent — 0 or (GRATUIT)")
+
+		// Affichage en fonction du stock unique du livre
+		if windBookAvailable {
+			fmt.Println("3) Livre de Sort : Mur de vent — 0 or (GRATUIT)")
+		} else {
+			fmt.Println("3) Livre de Sort : Mur de vent — (ÉPUISÉ)")
+		}
+
 		fmt.Println("9) Retour")
 
 		switch readChoice(r) {
 		case "1":
-			addInventory(c, "RedBull", 1)
-			redbullAvailable = false
-			fmt.Printf("Achat effectué ! Vous avez obtenu : RedBull (total: %d)\n", c.Inventory["RedBull"])
+			if redbullAvailable {
+				addInventory(c, "RedBull", 1)
+				redbullAvailable = false
+				fmt.Printf("Achat effectué ! Vous avez obtenu : RedBull (total: %d)\n", c.Inventory["RedBull"])
+			} else {
+				fmt.Println("La RedBull gratuite n’est plus disponible.")
+			}
+
 		case "2":
 			addInventory(c, "Potion de poison", 1)
 			fmt.Printf("Achat effectué ! Vous avez obtenu : Potion de poison (total: %d)\n", c.Inventory["Potion de poison"])
+
 		case "3":
-			addInventory(c, "Livre de Sort : Mur de vent", 1)
-			fmt.Println("Achat effectué ! Vous avez obtenu : Livre de Sort : Mur de vent")
+			if windBookAvailable {
+				addInventory(c, "Livre de Sort : Mur de vent", 1)
+				windBookAvailable = false
+				fmt.Println("Achat effectué ! Vous avez obtenu : Livre de Sort : Mur de vent")
+			} else {
+				fmt.Println("Le Livre de Sort : Mur de vent n’est plus disponible.")
+			}
+
 		case "9", "retour", "back":
 			return
+
 		default:
 			fmt.Println("Choix invalide.")
 		}
