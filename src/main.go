@@ -24,6 +24,7 @@ type Character struct {
 	HP        int
 	Inventory map[string]int
 	Skills    []string // techniques/sorts connus
+	Gold      int      // 💰 pièces d'or
 }
 
 // ==== Utils inventaire ====
@@ -90,6 +91,7 @@ func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[stri
 		HP:        hp,
 		Inventory: inv,
 		Skills:    []string{},
+		Gold:      100,
 	}
 	learnSkill(&ch, "Tempête d'acier")
 	return ch
@@ -129,19 +131,11 @@ func displayInfo(c Character) {
 	fmt.Printf("\033[33mNiveau: \u001B[0m%d\n", c.Level)
 	fmt.Printf("\033[32mPV    : \u001B[0m\033[32m%d / %d\n\u001B[0m", c.HP, c.HPMax)
 
-<<<<<<< HEAD
 	fmt.Println("\033[33mInventaire : \u001B[0m")
 	if len(c.Inventory) == 0 {
 		fmt.Println("\033[31m  (vide) \u001B[0m")
 	} else {
 		for item, qty := range c.Inventory {
-=======
-	fmt.Println("Inventaire :")
-	// CHANGEMENT: n'afficher que les items avec quantité > 0
-	shown := false
-	for item, qty := range c.Inventory {
-		if qty > 0 {
->>>>>>> feature/nathan
 			fmt.Printf("  - %s x%d\n", item, qty)
 			shown = true
 		}
@@ -214,17 +208,13 @@ func UseSpellBookWind(c *Character) {
 
 // ==== Inventaire ====
 
-// CHANGEMENT: n'afficher que les items de quantité > 0
 func OpenInventory(c Character) {
-<<<<<<< HEAD
+	shown := false
 	if len(c.Inventory) == 0 {
 		fmt.Println("\033[31mL'inventaire est vide. \u001B[0m")
 		return
 	}
 	fmt.Println("\033[33mInventaire : \u001B[0m")
-=======
-	shown := false
->>>>>>> feature/nathan
 	for item, qty := range c.Inventory {
 		if qty > 0 {
 			if !shown {
@@ -265,24 +255,6 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 	for {
 		fmt.Println("\n\033[33m===== INVENTAIRE =====\033[0m")
 		OpenInventory(*c)
-<<<<<<< HEAD
-		fmt.Println("\n\033[36m1) Boire une RedBull (+20 PV)\033[0m")
-		fmt.Println("\033[36m2) Utiliser une Potion de poison (10 dmg/s ×3)\033[0m")
-		fmt.Println("\033[36m3) Utiliser 'Livre de Sort : Mur de vent'\033[0m")
-		fmt.Println("\033[31m9) Retour\033[0m")
-		switch readChoice(r) {
-		case "1":
-			TakePot(c)
-			IsDead(c)
-		case "2":
-			PoisonPot(c)
-		case "3":
-			UseSpellBookWind(c)
-		case "9", "retour", "back":
-			return
-		default:
-			fmt.Println("\033[31mChoix invalide.\033[0m")
-=======
 
 		// Construction dynamique des actions disponibles selon l'inventaire
 		type opt struct {
@@ -332,6 +304,19 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 		// Lecture et dispatch
 		choice := readChoice(r)
 		if choice == "9" || choice == "retour" || choice == "back" {
+		fmt.Println("\n\033[36m1) Boire une RedBull (+20 PV)\033[0m")
+		fmt.Println("\033[36m2) Utiliser une Potion de poison (10 dmg/s ×3)\033[0m")
+		fmt.Println("\033[36m3) Utiliser 'Livre de Sort : Mur de vent'\033[0m")
+		fmt.Println("\033[31m9) Retour\033[0m")
+		switch readChoice(r) {
+		case "1":
+			TakePot(c)
+			IsDead(c)
+		case "2":
+			PoisonPot(c)
+		case "3":
+			UseSpellBookWind(c)
+		case "9", "retour", "back":
 			return
 		}
 		handled := false
@@ -344,7 +329,8 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 		}
 		if !handled {
 			fmt.Println("Choix invalide.")
->>>>>>> feature/nathan
+		default:
+			fmt.Println("\033[31mChoix invalide.\033[0m")
 		}
 	}
 }
@@ -364,11 +350,6 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 		} else {
 			fmt.Println("\033[31m1) RedBull — (ÉPUISÉ)\033[0m")
 		}
-<<<<<<< HEAD
-		fmt.Println("\033[36m2) Potion de poison — \033[0m\033[32mGRATUIT (temporaire)\033[0m")
-		fmt.Println("\033[36m3) Livre de Sort : Mur de vent — \033[0m\033[33m0 or \033[O\033[32m(GRATUIT)\033[0m")
-		fmt.Println("\033[31m9) Retour\033[0m")
-=======
 
 		fmt.Println("2) Potion de poison — GRATUIT (temporaire)")
 
@@ -380,7 +361,9 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 		}
 
 		fmt.Println("9) Retour")
->>>>>>> feature/nathan
+		fmt.Println("\033[36m2) Potion de poison — \033[0m\033[32mGRATUIT (temporaire)\033[0m")
+		fmt.Println("\033[36m3) Livre de Sort : Mur de vent — \033[0m\033[33m0 or \033[O\033[32m(GRATUIT)\033[0m")
+		fmt.Println("\033[31m9) Retour\033[0m")
 
 		switch readChoice(r) {
 		case "1":
@@ -394,14 +377,9 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 
 		case "2":
 			addInventory(c, "Potion de poison", 1)
-<<<<<<< HEAD
-			fmt.Printf("\033[32mAchat effectué ! Vous avez obtenu : Potion de poison (total: %d)\n", c.Inventory["Potion de poison \033[0m"])
-		case "3":
-			addInventory(c, "Livre de Sort : Mur de vent", 1)
-			fmt.Println("\033[32mAchat effectué ! Vous avez obtenu : Livre de Sort : Mur de vent\033[0m")
-=======
 			fmt.Printf("Achat effectué ! Vous avez obtenu : Potion de poison (total: %d)\n", c.Inventory["Potion de poison"])
 
+			fmt.Printf("\033[32mAchat effectué ! Vous avez obtenu : Potion de poison (total: %d)\n", c.Inventory["Potion de poison \033[0m"])
 		case "3":
 			if windBookAvailable {
 				addInventory(c, "Livre de Sort : Mur de vent", 1)
@@ -411,7 +389,8 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 				fmt.Println("Le Livre de Sort : Mur de vent n’est plus disponible.")
 			}
 
->>>>>>> feature/nathan
+			addInventory(c, "Livre de Sort : Mur de vent", 1)
+			fmt.Println("\033[32mAchat effectué ! Vous avez obtenu : Livre de Sort : Mur de vent\033[0m")
 		case "9", "retour", "back":
 			return
 
@@ -447,7 +426,6 @@ func mainMenu(c *Character, r *bufio.Reader) bool {
 }
 
 func main() {
-	// CHANGEMENT: on n'initialise plus d'items à 0 -> ils n'apparaissent pas
 	c := initCharacter("Yazuo", ClasseSamurai, 1, 100, 40, map[string]int{
 		"RedBull": 3,
 		// "Potion de poison": 0,
