@@ -73,9 +73,9 @@ func learnSkill(c *Character, spell string) bool {
 
 func spellBook(c *Character) {
 	if learnSkill(c, "Mur de vent") {
-		fmt.Println("Vous avez appris : Mur de vent !")
+		fmt.Println("\033[31mVous avez appris : Mur de vent !\033[0m")
 	} else {
-		fmt.Println("Vous connaissez déjà : Mur de vent.")
+		fmt.Println("\033[31mVous connaissez déjà : Mur de vent.\033[0m")
 	}
 }
 
@@ -123,24 +123,24 @@ func displayInfo(c Character) {
 ⠀⠀⠀⢰⣶⣶⣶⣾⣿⢃⣿⣿⣿⣿⣯⣿⣭⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 `
 	fmt.Println(asciiArt)
-	fmt.Println("=== Informations du personnage ===")
-	fmt.Printf("Nom   : %s\n", c.Name)
-	fmt.Printf("Classe: %s\n", c.Class)
-	fmt.Printf("Niveau: %d\n", c.Level)
-	fmt.Printf("PV    : %d / %d\n", c.HP, c.HPMax)
+	fmt.Println("\033[33m=== Informations du personnage ===\u001B[0m")
+	fmt.Printf("\033[33mNom   : \u001B[0m%s\n", c.Name)
+	fmt.Printf("\033[33mClasse: \u001B[0m%s\n", c.Class)
+	fmt.Printf("\033[33mNiveau: \u001B[0m%d\n", c.Level)
+	fmt.Printf("\033[32mPV    : \u001B[0m\033[32m%d / %d\n\u001B[0m", c.HP, c.HPMax)
 
-	fmt.Println("Inventaire :")
+	fmt.Println("\033[33mInventaire : \u001B[0m")
 	if len(c.Inventory) == 0 {
-		fmt.Println("  (vide)")
+		fmt.Println("\033[31m  (vide) \u001B[0m")
 	} else {
 		for item, qty := range c.Inventory {
 			fmt.Printf("  - %s x%d\n", item, qty)
 		}
 	}
 
-	fmt.Println("Compétences :")
+	fmt.Println("\033[33mCompétences : \u001B[0m")
 	if len(c.Skills) == 0 {
-		fmt.Println("  (aucune technique)")
+		fmt.Println("\033[31m(aucune technique) \u001B[0m")
 	} else {
 		for _, s := range c.Skills {
 			fmt.Printf("  - %s\n", s)
@@ -189,11 +189,11 @@ func PoisonPot(c *Character) {
 // Utiliser le Livre : Mur de vent
 func UseSpellBookWind(c *Character) {
 	if c.Inventory["Livre de Sort : Mur de vent"] <= 0 {
-		fmt.Println("Vous n'avez pas de 'Livre de Sort : Mur de vent'.")
+		fmt.Println("\033[31mVous n'avez pas de 'Livre de Sort : Mur de vent'.\033[0m")
 		return
 	}
 	if hasSkill(*c, "Mur de vent") {
-		fmt.Println("Vous connaissez déjà 'Mur de vent'. Le livre n'a pas été consommé.")
+		fmt.Println("\033[31mVous connaissez déjà 'Mur de vent'. Le livre n'a pas été consommé.\033[0m")
 		return
 	}
 	removeInventory(c, "Livre de Sort : Mur de vent", 1)
@@ -217,9 +217,9 @@ func OpenInventory(c Character) {
 // TÂCHE 8 : si HP <= 0 -> WASTED + revive à 50% PV max (continuer le jeu)
 func IsDead(c *Character) bool {
 	if c.HP <= 0 {
-		fmt.Println("\n*** WASTED ***")
+		fmt.Println("\033[31m\n*** WASTED ***\033[0m")
 		c.HP = c.HPMax / 2
-		fmt.Printf("Vous êtes ressuscité avec %d/%d PV.\n", c.HP, c.HPMax)
+		fmt.Printf("\033[32mVous êtes ressuscité avec \033[0m\033[33m%d/%d PV.\n\033[0m", c.HP, c.HPMax)
 		return true
 	}
 	return false
@@ -237,12 +237,12 @@ func readChoice(r *bufio.Reader) string {
 
 func inventoryMenu(c *Character, r *bufio.Reader) {
 	for {
-		fmt.Println("\n--- INVENTAIRE ---")
+		fmt.Println("\n\033[33m===== INVENTAIRE =====\033[0m")
 		OpenInventory(*c)
-		fmt.Println("\n1) Boire une RedBull (+20 PV)")
-		fmt.Println("2) Utiliser une Potion de poison (10 dmg/s ×3)")
-		fmt.Println("3) Utiliser 'Livre de Sort : Mur de vent'")
-		fmt.Println("9) Retour")
+		fmt.Println("\n\033[36m1) Boire une RedBull (+20 PV)\033[0m")
+		fmt.Println("\033[36m2) Utiliser une Potion de poison (10 dmg/s ×3)\033[0m")
+		fmt.Println("\033[36m3) Utiliser 'Livre de Sort : Mur de vent'\033[0m")
+		fmt.Println("\033[31m9) Retour\033[0m")
 		switch readChoice(r) {
 		case "1":
 			TakePot(c)
@@ -254,7 +254,7 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 		case "9", "retour", "back":
 			return
 		default:
-			fmt.Println("Choix invalide.")
+			fmt.Println("\033[31mChoix invalide.\033[0m")
 		}
 	}
 }
@@ -265,35 +265,35 @@ var redbullAvailable = true
 
 func merchantMenu(c *Character, r *bufio.Reader) {
 	for {
-		fmt.Println("\n=== MARCHAND ===")
+		fmt.Println("\033[33m\n=== MARCHAND ===\033[0m")
 		if redbullAvailable {
-			fmt.Println("1) RedBull — GRATUIT")
+			fmt.Println("\033[36m1) RedBull — \033[0m\033[32mGRATUIT\033[0m")
 		} else {
-			fmt.Println("1) RedBull — (ÉPUISÉ)")
+			fmt.Println("\033[31m1) RedBull — (ÉPUISÉ)\033[0m")
 		}
-		fmt.Println("2) Potion de poison — GRATUIT (temporaire)")
-		fmt.Println("3) Livre de Sort : Mur de vent — 0 or (GRATUIT)")
-		fmt.Println("9) Retour")
+		fmt.Println("\033[36m2) Potion de poison — \033[0m\033[32mGRATUIT (temporaire)\033[0m")
+		fmt.Println("\033[36m3) Livre de Sort : Mur de vent — \033[0m\033[33m0 or \033[O\033[32m(GRATUIT)\033[0m")
+		fmt.Println("\033[31m9) Retour\033[0m")
 
 		switch readChoice(r) {
 		case "1":
 			if redbullAvailable {
 				addInventory(c, "RedBull", 1)
 				redbullAvailable = false
-				fmt.Printf("Achat effectué ! Vous avez obtenu : RedBull (total: %d)\n", c.Inventory["RedBull"])
+				fmt.Printf("\033[32mAchat effectué ! Vous avez obtenu : RedBull (total: %d)\n\033[0m", c.Inventory["RedBull"])
 			} else {
-				fmt.Println("La RedBull gratuite n’est plus disponible.")
+				fmt.Println("033[31mLa RedBull gratuite n’est plus disponible.\033[0m")
 			}
 		case "2":
 			addInventory(c, "Potion de poison", 1)
-			fmt.Printf("Achat effectué ! Vous avez obtenu : Potion de poison (total: %d)\n", c.Inventory["Potion de poison"])
+			fmt.Printf("\033[32mAchat effectué ! Vous avez obtenu : Potion de poison (total: %d)\n", c.Inventory["Potion de poison \033[0m"])
 		case "3":
 			addInventory(c, "Livre de Sort : Mur de vent", 1)
-			fmt.Println("Achat effectué ! Vous avez obtenu : Livre de Sort : Mur de vent")
+			fmt.Println("\033[32mAchat effectué ! Vous avez obtenu : Livre de Sort : Mur de vent\033[0m")
 		case "9", "retour", "back":
 			return
 		default:
-			fmt.Println("Choix invalide.")
+			fmt.Println("\033[31mChoix invalide.\033[0m")
 		}
 	}
 }
@@ -315,10 +315,10 @@ func mainMenu(c *Character, r *bufio.Reader) bool {
 	case "3", "marchand", "shop":
 		merchantMenu(c, r)
 	case "4", "q", "quit", "quitter":
-		fmt.Println("Au revoir !")
+		fmt.Println("\037[0mAu revoir !\033[0m")
 		return false
 	default:
-		fmt.Println("Choix invalide.")
+		fmt.Println("\033[31mChoix invalide.\033[0m")
 	}
 	return true
 }
