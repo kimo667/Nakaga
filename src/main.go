@@ -7,10 +7,9 @@ import (
 	"sort"
 	"strings"
 	"time"
-	"unicode"
 )
 
-/* ================== Couleurs ================== */
+/* ====== Couleurs ====== */
 
 const (
 	CReset  = "\033[0m"
@@ -20,38 +19,42 @@ const (
 	CCyan   = "\033[36m"
 )
 
-/* ================== Constantes ================== */
+/* ====== Capacité & Effets ====== */
 
 const (
-	InventoryCapacity  = 10
+	BaseInventoryCap     = 10 // capacité de base
+	InventoryUpgradeStep = 10 // +10 par upgrade
+	MaxInventoryUpgrades = 3  // max 3 upgrades
+
 	HealRedBull        = 20
 	PoisonTicks        = 3
 	PoisonDamagePerSec = 10
 )
 
-/* ================== Types ================== */
+/* ====== Types ====== */
 
 type Classe string
 
 const (
-	ClasseHumain Classe = "Humain"
-	ClasseElfe   Classe = "Elfe"
-	ClasseNain   Classe = "Nain"
-	// (On conserve ton univers samouraï, mais pour T11 on propose ces 3 classes.)
+	ClasseHumain  Classe = "Humain"
+	ClasseSamurai Classe = "Samurai"
+	ClasseNinja   Classe = "Ninja"
 )
 
 type Character struct {
-	Name      string
-	Class     Classe
-	Level     int
-	HPMax     int
-	HP        int
-	Inventory map[string]int
-	Skills    []string
-	Gold      int // juste initialisé/affiché (T13 sera pour l’économie)
+	Name        string
+	Class       Classe
+	Level       int
+	HPMax       int
+	HP          int
+	Inventory   map[string]int
+	Skills      []string
+	Gold        int
+	CapMax      int
+	InvUpgrades int
 }
 
-/* ================== Utils ================== */
+/* ====== Utils ====== */
 
 func clamp(v, min, max int) int {
 	if v < min {
@@ -73,7 +76,7 @@ func readChoice(r *bufio.Reader) string {
 	return strings.ToLower(strings.TrimSpace(readLine(r, "> ")))
 }
 
-/* =========== Inventaire (capacité 10 items) =========== */
+/* ====== Inventaire (capacité & upgrades) ====== */
 
 func totalItems(c Character) int {
 	sum := 0
@@ -85,30 +88,24 @@ func totalItems(c Character) int {
 	return sum
 }
 
-func addInventory(c *Character, item string, qty int) int {
+func canCarry(c Character, qty int) bool {
+	return totalItems(c)+qty <= c.CapMax
+}
+
+func addInventory(c *Character, item string, qty int) bool {
 	if qty <= 0 {
-		return 0
+		return false
 	}
 	if c.Inventory == nil {
 		c.Inventory = make(map[string]int)
 	}
-	used := totalItems(*c)
-	free := InventoryCapacity - used
-	if free <= 0 {
-		fmt.Printf(CRed+"Inventaire plein (%d/%d) — impossible d'ajouter %s."+CReset+"\n", used, InventoryCapacity, item)
-		return 0
+	if !canCarry(*c, qty) {
+		fmt.Printf(CRed+"Inventaire plein (%d/%d). Impossible d'ajouter %d x %s."+CReset+"\n",
+			totalItems(*c), c.CapMax, qty, item)
+		return false
 	}
-	add := qty
-	if add > free {
-		add = free
-	}
-	c.Inventory[item] += add
-	if add < qty {
-		fmt.Printf(CYellow+"Ajout partiel: +%d %s (cap %d/%d)."+CReset+"\n", add, item, used+add, InventoryCapacity)
-	} else {
-		fmt.Printf(CGreen+"Ajouté: +%d %s (cap %d/%d)."+CReset+"\n", add, item, used+add, InventoryCapacity)
-	}
-	return add
+	c.Inventory[item] += qty
+	return true
 }
 
 func removeInventory(c *Character, item string, qty int) bool {
@@ -124,7 +121,19 @@ func removeInventory(c *Character, item string, qty int) bool {
 	return true
 }
 
-/* ================== Skills ================== */
+func upgradeInventorySlot(c *Character) bool {
+	if c.InvUpgrades >= MaxInventoryUpgrades {
+		fmt.Printf(CYellow+"Capacité déjà au maximum (%d/%d upgrades)."+CReset+"\n", c.InvUpgrades, MaxInventoryUpgrades)
+		return false
+	}
+	c.InvUpgrades++
+	c.CapMax += InventoryUpgradeStep
+	fmt.Printf(CGreen+"Capacité augmentée ! Nouvelle capacité : %d (améliorations : %d/%d)"+CReset+"\n",
+		c.CapMax, c.InvUpgrades, MaxInventoryUpgrades)
+	return true
+}
+
+/* ====== Skills ====== */
 
 func hasSkill(c Character, s string) bool {
 	for _, k := range c.Skills {
@@ -144,104 +153,90 @@ func learnSkill(c *Character, s string) bool {
 	return true
 }
 
-/* =============== TÂCHE 11 : characterCreation =============== */
+/* ====== Initialisation ====== */
 
-func isLetters(s string) bool {
-	for _, r := range s {
-		if !unicode.IsLetter(r) && r != '-' && r != ' ' {
-			return false
+func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[string]int) Character {
+	ch := Character{
+		Name:        name,
+		Class:       class,
+		Level:       level,
+		HPMax:       hpMax,
+		HP:          clamp(hp, 0, hpMax),
+		Inventory:   map[string]int{},
+		Skills:      []string{},
+		Gold:        100,              // or de départ
+		CapMax:      BaseInventoryCap, // capacité de base
+		InvUpgrades: 0,
+	}
+	// copie inventaire de départ en respectant la capacité
+	for k, v := range inv {
+		if v <= 0 {
+			continue
+		}
+		if !addInventory(&ch, k, v) {
+			break
 		}
 	}
-	return len(strings.TrimSpace(s)) > 0
+	// technique de base
+	learnSkill(&ch, "Tempête d'acier")
+	return ch
 }
 
-func normalizeName(raw string) string {
-	raw = strings.TrimSpace(raw)
-	raw = strings.ToLower(raw)
-	// Met majuscule sur première lettre de chaque mot
-	parts := strings.Fields(raw)
-	for i, p := range parts {
-		runes := []rune(p)
-		if len(runes) > 0 {
-			runes[0] = unicode.ToUpper(runes[0])
-			parts[i] = string(runes)
-		}
-	}
-	return strings.Join(parts, " ")
-}
+/* ====== Création interactive du personnage ====== */
 
-func askClass(r *bufio.Reader) Classe {
+func chooseClass(r *bufio.Reader) Classe {
 	for {
-		fmt.Println("Choisis ta classe :")
-		fmt.Println("1) Humain (100 PV max)")
-		fmt.Println("2) Elfe   (80  PV max)")
-		fmt.Println("3) Nain   (120 PV max)")
-		ch := readChoice(r)
-		switch ch {
+		fmt.Println(CYellow + "Choisis ta classe :" + CReset)
+		fmt.Println("1) Humain  – équilibré")
+		fmt.Println("2) Samouraï – PV élevés")
+		fmt.Println("3) Ninja    – agile")
+		choice := readChoice(r)
+		switch choice {
 		case "1", "humain":
 			return ClasseHumain
-		case "2", "elfe":
-			return ClasseElfe
-		case "3", "nain":
-			return ClasseNain
+		case "2", "samourai", "samouraï", "samurai":
+			return ClasseSamurai
+		case "3", "ninja":
+			return ClasseNinja
 		default:
 			fmt.Println(CRed + "Choix invalide." + CReset)
 		}
 	}
 }
 
-func baseStatsForClass(cl Classe) (hpMax int) {
-	switch cl {
-	case ClasseHumain:
-		return 100
-	case ClasseElfe:
-		return 80
-	case ClasseNain:
-		return 120
+func createCharacterInteractive(r *bufio.Reader) Character {
+	fmt.Println(CYellow + "=== Création de personnage ===" + CReset)
+	name := readLine(r, "Entre ton nom: ")
+	if name == "" {
+		name = "Yazuo"
+	}
+	class := chooseClass(r)
+
+	// petits bonus par classe (optionnel, simple)
+	hpMax := 100
+	switch class {
+	case ClasseSamurai:
+		hpMax = 110
+	case ClasseNinja:
+		hpMax = 90
 	default:
-		return 100
-	}
-}
-
-func characterCreation(r *bufio.Reader) Character {
-	// Nom (lettres uniquement) + normalisation
-	var name string
-	for {
-		raw := readLine(r, "Entre le nom de ton personnage (lettres, espaces, tirets) : ")
-		if !isLetters(raw) {
-			fmt.Println(CRed + "Nom invalide. Lettres/espaces/tirets uniquement." + CReset)
-			continue
-		}
-		name = normalizeName(raw)
-		if name != "" {
-			break
-		}
+		hpMax = 100
 	}
 
-	// Classe + PV selon classe (PV actuels = 50% PV max), lvl=1, skill de base
-	cl := askClass(r)
-	hpMax := baseStatsForClass(cl)
-	hp := hpMax / 2
+	// HP de départ 40% des PV max (comme avant ~40/100)
+	startHP := hpMax * 40 / 100
 
-	ch := Character{
-		Name:      name,
-		Class:     cl,
-		Level:     1,
-		HPMax:     hpMax,
-		HP:        hp,
-		Inventory: map[string]int{},
-		Skills:    []string{},
-		Gold:      100, // *** juste initialisé (pas d’économie ici) ***
+	// inventaire de départ (humour 3 RedBull)
+	startInv := map[string]int{
+		"RedBull": 3,
 	}
-	learnSkill(&ch, "Coup de Poing") // base demandé par T11
 
-	// on te met 3 RedBull pour le côté humour :)
-	addInventory(&ch, "RedBull", 3)
-
+	ch := initCharacter(name, class, 1, hpMax, startHP, startInv)
+	fmt.Println(CGreen + "Personnage créé !" + CReset)
 	return ch
 }
 
-/* ================== Affichages ================== */
+/* ====== Affichages ====== */
 
 func displayInventory(c Character) {
 	keys := make([]string, 0, len(c.Inventory))
@@ -251,7 +246,7 @@ func displayInventory(c Character) {
 		}
 	}
 	sort.Strings(keys)
-	fmt.Printf(CYellow+"Inventaire (%d/%d) :"+CReset+"\n", totalItems(c), InventoryCapacity)
+	fmt.Printf(CYellow+"Inventaire (%d/%d) :"+CReset+"\n", totalItems(c), c.CapMax)
 	if len(keys) == 0 {
 		fmt.Println("  (vide)")
 		return
@@ -293,6 +288,8 @@ func displayInfo(c Character) {
 	fmt.Printf(CYellow+"Niveau: "+CReset+"%d\n", c.Level)
 	fmt.Printf(CGreen+"PV    : "+CReset+CGreen+"%d/%d"+CReset+"\n", c.HP, c.HPMax)
 	fmt.Printf(CYellow+"Or    : "+CReset+"%d\n", c.Gold)
+	fmt.Printf(CYellow+"Capacité: "+CReset+"%d/%d (améliorations: %d/%d)\n",
+		totalItems(c), c.CapMax, c.InvUpgrades, MaxInventoryUpgrades)
 
 	fmt.Println(CYellow + "Compétences :" + CReset)
 	if len(c.Skills) == 0 {
@@ -306,7 +303,7 @@ func displayInfo(c Character) {
 	displayInventory(c)
 }
 
-/* ================== Consommables ================== */
+/* ====== Consommables & Effets ====== */
 
 func takeRedBull(c *Character) {
 	if !removeInventory(c, "RedBull", 1) {
@@ -316,6 +313,16 @@ func takeRedBull(c *Character) {
 	before := c.HP
 	c.HP = clamp(c.HP+HealRedBull, 0, c.HPMax)
 	fmt.Printf(CCyan+"Tu as bu une RedBull !"+CReset+" PV: %d → "+CGreen+"%d/%d"+CReset+"\n", before, c.HP, c.HPMax)
+}
+
+func usePotionVie(c *Character) {
+	if !removeInventory(c, "Potion de vie", 1) {
+		fmt.Println(CRed + "Pas de Potion de vie." + CReset)
+		return
+	}
+	before := c.HP
+	c.HP = clamp(c.HP+20, 0, c.HPMax)
+	fmt.Printf(CCyan+"Vous buvez une Potion de vie."+CReset+" PV: %d → "+CGreen+"%d/%d"+CReset+"\n", before, c.HP, c.HPMax)
 }
 
 func poisonPot(c *Character) {
@@ -337,8 +344,6 @@ func poisonPot(c *Character) {
 	fmt.Printf(CCyan+"L'effet du poison est terminé. PV restants : %d/%d"+CReset+"\n", c.HP, c.HPMax)
 }
 
-/* =========== Livre de sort (version actuelle « Mur de vent ») =========== */
-
 func useSpellBookWind(c *Character) {
 	if c.Inventory["Livre de Sort : Mur de vent"] <= 0 {
 		fmt.Println(CRed + "Vous n'avez pas de 'Livre de Sort : Mur de vent'." + CReset)
@@ -354,7 +359,7 @@ func useSpellBookWind(c *Character) {
 	}
 }
 
-/* ================== Mort / revive (T8) ================== */
+/* ====== Mort / revive (T8) ====== */
 
 func isDead(c *Character) bool {
 	if c.HP <= 0 {
@@ -366,7 +371,122 @@ func isDead(c *Character) bool {
 	return false
 }
 
-/* ================== Menus ================== */
+/* ====== Marchand (économie + upgrades) ====== */
+
+func canAfford(c Character, price int) bool { return c.Gold >= price }
+
+func buyItem(c *Character, item string, price, qty int) bool {
+	if price < 0 || qty <= 0 {
+		return false
+	}
+	// vérifier la place avant de payer
+	if !canCarry(*c, qty) {
+		fmt.Printf(CRed+"Inventaire plein (%d/%d). Libérez de la place avant d’acheter %s."+CReset+"\n",
+			totalItems(*c), c.CapMax, item)
+		return false
+	}
+	if !canAfford(*c, price) {
+		fmt.Printf(CRed+"Or insuffisant pour %s (coût %d). Solde: %d"+CReset+"\n", item, price, c.Gold)
+		return false
+	}
+	c.Gold -= price
+	if !addInventory(c, item, qty) {
+		// sécurité
+		c.Gold += price
+		return false
+	}
+	fmt.Printf(CGreen+"Achat effectué ! %s x%d (−%d or). Or restant: %d"+CReset+"\n", item, qty, price, c.Gold)
+	return true
+}
+
+var redbullFreeOnce = true
+var windBookStock = 1 // stock unique du livre
+
+func merchantMenu(c *Character, r *bufio.Reader) {
+	for {
+		fmt.Println("\n" + CYellow + "=== MARCHAND ===" + CReset)
+		if redbullFreeOnce {
+			fmt.Println("1) RedBull — " + CGreen + "GRATUIT" + CReset)
+		} else {
+			fmt.Println("1) RedBull — (ÉPUISÉ)")
+		}
+		// Tarifs (version pote)
+		fmt.Println("2) Potion de vie — 3 or")
+		fmt.Println("3) Potion de poison — 6 or")
+		if windBookStock > 0 {
+			fmt.Println("4) Livre de Sort : Mur de vent — 25 or")
+		} else {
+			fmt.Println("4) Livre de Sort : Mur de vent — (ÉPUISÉ)")
+		}
+		// Matériaux
+		fmt.Println("5) Fourrure de Loup — 4 or")
+		fmt.Println("6) Peau de Troll — 7 or")
+		fmt.Println("7) Cuir de Sanglier — 3 or")
+		fmt.Println("8) Plume de Corbeau — 1 or")
+		// Upgrade capacité
+		fmt.Printf("10) Augmentation d’inventaire — 30 or (utilisée %d/%d)\n", c.InvUpgrades, MaxInventoryUpgrades)
+
+		fmt.Println("9) Retour")
+
+		switch readChoice(r) {
+		case "1": // RedBull gratuite 1 fois
+			if redbullFreeOnce {
+				if addInventory(c, "RedBull", 1) {
+					redbullFreeOnce = false
+					fmt.Printf(CGreen+"RedBull reçue ! (total: %d)"+CReset+"\n", c.Inventory["RedBull"])
+				}
+			} else {
+				fmt.Println(CRed + "La RedBull gratuite n’est plus disponible." + CReset)
+			}
+
+		case "2":
+			_ = buyItem(c, "Potion de vie", 3, 1)
+
+		case "3":
+			_ = buyItem(c, "Potion de poison", 6, 1)
+
+		case "4":
+			if windBookStock <= 0 {
+				fmt.Println(CRed + "Le Livre de Sort : Mur de vent n’est plus disponible." + CReset)
+				break
+			}
+			if buyItem(c, "Livre de Sort : Mur de vent", 25, 1) {
+				windBookStock--
+			}
+
+		case "5":
+			_ = buyItem(c, "Fourrure de Loup", 4, 1)
+		case "6":
+			_ = buyItem(c, "Peau de Troll", 7, 1)
+		case "7":
+			_ = buyItem(c, "Cuir de Sanglier", 3, 1)
+		case "8":
+			_ = buyItem(c, "Plume de Corbeau", 1, 1)
+
+		case "10":
+			if c.InvUpgrades >= MaxInventoryUpgrades {
+				fmt.Printf(CYellow+"Limite d’améliorations atteinte (%d/%d)."+CReset+"\n", c.InvUpgrades, MaxInventoryUpgrades)
+				break
+			}
+			if !canAfford(*c, 30) {
+				fmt.Printf(CRed+"Or insuffisant pour l’amélioration (coût 30). Solde: %d"+CReset+"\n", c.Gold)
+				break
+			}
+			c.Gold -= 30
+			if !upgradeInventorySlot(c) {
+				c.Gold += 30
+			}
+
+		case "9", "retour", "back":
+			return
+
+		default:
+			fmt.Println(CRed + "Choix invalide." + CReset)
+		}
+	}
+}
+
+/* ====== Menus ====== */
 
 func inventoryMenu(c *Character, r *bufio.Reader) {
 	for {
@@ -384,6 +504,9 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 
 		if c.Inventory["RedBull"] > 0 {
 			add("Boire une RedBull (+20 PV)", func() { takeRedBull(c); isDead(c) })
+		}
+		if c.Inventory["Potion de vie"] > 0 {
+			add("Boire une Potion de vie (+20 PV)", func() { usePotionVie(c) })
 		}
 		if c.Inventory["Potion de poison"] > 0 {
 			add("Utiliser une Potion de poison (10 dmg/s ×3)", func() { poisonPot(c) })
@@ -419,69 +542,11 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 	}
 }
 
-// Marchand version « gratuit » (T7/T9), pas d’économie ici
-var redbullFreeOnce = true
-var poisonFreeOnce = true
-var windBookFreeOnce = true
-
-func merchantMenu(c *Character, r *bufio.Reader) {
-	for {
-		fmt.Println("\n" + CYellow + "=== MARCHAND ===" + CReset)
-		if redbullFreeOnce {
-			fmt.Println("1) RedBull — " + CGreen + "GRATUIT" + CReset)
-		} else {
-			fmt.Println("1) RedBull — (ÉPUISÉ)")
-		}
-		if poisonFreeOnce {
-			fmt.Println("2) Potion de poison — " + CGreen + "GRATUIT" + CReset)
-		} else {
-			fmt.Println("2) Potion de poison — (ÉPUISÉ)")
-		}
-		if windBookFreeOnce {
-			fmt.Println("3) Livre de Sort : Mur de vent — " + CGreen + "GRATUIT" + CReset)
-		} else {
-			fmt.Println("3) Livre de Sort : Mur de vent — (ÉPUISÉ)")
-		}
-		fmt.Println("9) Retour")
-
-		switch readChoice(r) {
-		case "1":
-			if redbullFreeOnce {
-				if addInventory(c, "RedBull", 1) > 0 {
-					redbullFreeOnce = false
-				}
-			} else {
-				fmt.Println(CRed + "Plus de RedBull gratuite." + CReset)
-			}
-		case "2":
-			if poisonFreeOnce {
-				if addInventory(c, "Potion de poison", 1) > 0 {
-					poisonFreeOnce = false
-				}
-			} else {
-				fmt.Println(CRed + "Plus de Potion de poison gratuite." + CReset)
-			}
-		case "3":
-			if windBookFreeOnce {
-				if addInventory(c, "Livre de Sort : Mur de vent", 1) > 0 {
-					windBookFreeOnce = false
-				}
-			} else {
-				fmt.Println(CRed + "Livre déjà pris." + CReset)
-			}
-		case "9", "retour", "back":
-			return
-		default:
-			fmt.Println(CRed + "Choix invalide." + CReset)
-		}
-	}
-}
-
 func mainMenu(c *Character, r *bufio.Reader) bool {
 	fmt.Println("\n\033[1;33m===== MENU =====\033[0m")
 	fmt.Println("1) Afficher les informations du personnage")
 	fmt.Println("2) Accéder au contenu de l’inventaire")
-	fmt.Println("3) Marchand (gratuit)")
+	fmt.Println("3) Marchand")
 	fmt.Println("4) Quitter")
 
 	switch readChoice(r) {
@@ -500,12 +565,12 @@ func mainMenu(c *Character, r *bufio.Reader) bool {
 	return true
 }
 
-/* ================== main ================== */
+/* ====== main ====== */
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
-	// TÂCHE 11 remplace l’init en dur dans main:
-	c := characterCreation(reader)
+	// Création interactive (nom + classe)
+	c := createCharacterInteractive(reader)
 
 	for mainMenu(&c, reader) {
 		isDead(&c) // revive auto si besoin
