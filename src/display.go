@@ -5,10 +5,7 @@ import (
 	"sort"
 )
 
-// Reader: petite interface compatible *bufio.Reader
-type Reader interface {
-	ReadString(delim byte) (string, error)
-}
+/* ====== Affichages ====== */
 
 func displayInventory(c Character) {
 	keys := make([]string, 0, len(c.Inventory))
@@ -18,7 +15,7 @@ func displayInventory(c Character) {
 		}
 	}
 	sort.Strings(keys)
-	fmt.Printf(CYellow+"Inventaire (%d/%d):"+CReset+"\n", totalItems(c), c.CapMax)
+	fmt.Printf(CYellow+"Inventaire (%d/%d) :"+CReset+"\n", totalItems(c), c.CapMax)
 	if len(keys) == 0 {
 		fmt.Println("  (vide)")
 		return

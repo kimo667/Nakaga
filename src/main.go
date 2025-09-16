@@ -6,11 +6,15 @@ import (
 )
 
 func main() {
+	// Lecteur stdin pour tous les menus
 	reader := bufio.NewReader(os.Stdin)
-	// Création interactive (nom + classe)
-	c := createCharacterInteractive(reader)
 
-	for mainMenu(&c, reader) {
-		isDead(&c) // revive auto si besoin
+	// Création interactive (nom + classe, PV init, inv de départ…)
+	player := createCharacterInteractive(reader)
+
+	// Boucle de jeu principale
+	for mainMenu(&player, reader) {
+		// Sécurité: si le joueur tombe à 0 PV quelque part, on applique le revive T8
+		isDead(&player)
 	}
 }

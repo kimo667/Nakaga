@@ -1,5 +1,7 @@
 package main
 
+// ====== Couleurs ANSI pour l'affichage ======
+
 const (
 	CReset  = "\033[0m"
 	CRed    = "\033[31m"

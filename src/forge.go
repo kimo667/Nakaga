@@ -1,8 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+)
 
-// Recettes : item crafté → ressources
+// Liste des recettes : item → ressources nécessaires
 var forgeRecipes = map[string]map[string]int{
 	"Chapeau de l’aventurier": {
 		"Plume de Corbeau": 1,
@@ -18,6 +21,7 @@ var forgeRecipes = map[string]map[string]int{
 	},
 }
 
+// Vérifie si le joueur a les ressources nécessaires
 func hasResources(c *Character, recipe map[string]int) bool {
 	for item, qty := range recipe {
 		if c.Inventory[item] < qty {
@@ -27,13 +31,15 @@ func hasResources(c *Character, recipe map[string]int) bool {
 	return true
 }
 
+// Consomme les ressources du joueur
 func consumeResources(c *Character, recipe map[string]int) {
 	for item, qty := range recipe {
 		removeInventory(c, item, qty)
 	}
 }
 
-func blacksmithMenu(c *Character, r Reader) {
+// Menu du forgeron
+func blacksmithMenu(c *Character, r *bufio.Reader) {
 	for {
 		fmt.Println("\n=== FORGERON ===")
 		fmt.Printf("Votre or : %d\n", c.Gold)
@@ -69,8 +75,11 @@ func blacksmithMenu(c *Character, r Reader) {
 				continue
 			}
 
+			// Consommer or + ressources
 			c.Gold -= 5
 			consumeResources(c, recipe)
+
+			// Ajouter l'objet crafté
 			addInventory(c, item, 1)
 			fmt.Printf("Vous avez fabriqué : %s (reste %d or).\n", item, c.Gold)
 		} else {

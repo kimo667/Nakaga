@@ -1,6 +1,10 @@
 package main
 
-import "sort"
+import (
+	"sort"
+)
+
+/* ====== Skills ====== */
 
 func hasSkill(c Character, s string) bool {
 	for _, k := range c.Skills {

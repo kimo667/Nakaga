@@ -1,46 +1,24 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
-func clamp(v, min, max int) int {
-	if v < min {
-		return min
-	}
-	if v > max {
-		return max
-	}
-	return v
-}
-
-// ----- capacité -----
+/* ====== Inventaire : capacité & upgrades ====== */
 
 func totalItems(c Character) int {
-	n := 0
+	sum := 0
 	for _, q := range c.Inventory {
 		if q > 0 {
-			n += q
+			sum += q
 		}
 	}
-	return n
+	return sum
 }
 
 func canCarry(c Character, qty int) bool {
 	return totalItems(c)+qty <= c.CapMax
 }
-
-func upgradeInventorySlot(c *Character) bool {
-	if c.InvUpgrades >= MaxInventoryUpgrades {
-		fmt.Printf(CYellow+"Capacité déjà au max (%d/%d)."+CReset+"\n", c.InvUpgrades, MaxInventoryUpgrades)
-		return false
-	}
-	c.InvUpgrades++
-	c.CapMax += InventoryUpgradeStep
-	fmt.Printf(CGreen+"Capacité augmentée → %d (améliorations: %d/%d)"+CReset+"\n",
-		c.CapMax, c.InvUpgrades, MaxInventoryUpgrades)
-	return true
-}
-
-// ----- add / remove -----
 
 func addInventory(c *Character, item string, qty int) bool {
 	if qty <= 0 {
@@ -70,3 +48,35 @@ func removeInventory(c *Character, item string, qty int) bool {
 	}
 	return true
 }
+
+func upgradeInventorySlot(c *Character) bool {
+	if c.InvUpgrades >= MaxInventoryUpgrades {
+		fmt.Printf(CYellow+"Capacité déjà au maximum (%d/%d upgrades)."+CReset+"\n", c.InvUpgrades, MaxInventoryUpgrades)
+		return false
+	}
+	c.InvUpgrades++
+	c.CapMax += InventoryUpgradeStep
+	fmt.Printf(CGreen+"Capacité augmentée ! Nouvelle capacité : %d (améliorations : %d/%d)"+CReset+"\n",
+		c.CapMax, c.InvUpgrades, MaxInventoryUpgrades)
+	return true
+}
+
+/* ====== Affichage de l’inventaire ====== */
+
+//func displayInventory(c Character) {
+//keys := make([]string, 0, len(c.Inventory))
+//for k, v := range c.Inventory {
+//if v > 0 {
+//	keys = append(keys, k)
+//}
+//}
+//sort.Strings(keys)
+//fmt.Printf(CYellow+"Inventaire (%d/%d) :"+CReset+"\n", totalItems(c), c.CapMax)
+//if len(keys) == 0 {
+//fmt.Println("  (vide)")
+//	return
+//}
+//	for _, k := range keys {
+//		fmt.Printf("  - %s x%d\n", k, c.Inventory[k])
+//	}
+//}

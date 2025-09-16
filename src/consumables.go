@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+/* ====== Consommables & Effets ====== */
+
 func takeRedBull(c *Character) {
 	if !removeInventory(c, "RedBull", 1) {
 		fmt.Println(CRed + "Pas de RedBull dans l'inventaire !" + CReset)
@@ -12,8 +14,7 @@ func takeRedBull(c *Character) {
 	}
 	before := c.HP
 	c.HP = clamp(c.HP+HealRedBull, 0, c.HPMax)
-	fmt.Printf(CCyan+"Tu as bu une RedBull !"+CReset+" PV: %d → "+CGreen+"%d/%d"+CReset+"\n",
-		before, c.HP, c.HPMax)
+	fmt.Printf(CCyan+"Tu as bu une RedBull !"+CReset+" PV: %d → "+CGreen+"%d/%d"+CReset+"\n", before, c.HP, c.HPMax)
 }
 
 func usePotionVie(c *Character) {
@@ -23,8 +24,7 @@ func usePotionVie(c *Character) {
 	}
 	before := c.HP
 	c.HP = clamp(c.HP+20, 0, c.HPMax)
-	fmt.Printf(CCyan+"Vous buvez une Potion de vie."+CReset+" PV: %d → "+CGreen+"%d/%d"+CReset+"\n",
-		before, c.HP, c.HPMax)
+	fmt.Printf(CCyan+"Vous buvez une Potion de vie."+CReset+" PV: %d → "+CGreen+"%d/%d"+CReset+"\n", before, c.HP, c.HPMax)
 }
 
 func poisonPot(c *Character) {
@@ -37,7 +37,7 @@ func poisonPot(c *Character) {
 		before := c.HP
 		c.HP = clamp(c.HP-PoisonDamagePerSec, 0, c.HPMax)
 		fmt.Printf("Effet poison %d/%d → PV: %d → %d/%d\n", i, PoisonTicks, before, c.HP, c.HPMax)
-		if isDead(c) {
+		if isDead(c) { // revive + stop poison
 			fmt.Println(CRed + "L'effet du poison est interrompu suite à votre mort." + CReset)
 			return
 		}

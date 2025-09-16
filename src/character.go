@@ -5,13 +5,15 @@ import (
 	"fmt"
 )
 
-// Choix classe
+// ====== Choix de classe ======
+
 func chooseClass(r *bufio.Reader) Classe {
 	for {
 		fmt.Println(CYellow + "Choisis ta classe :" + CReset)
 		fmt.Println("1) Humain  – équilibré")
 		fmt.Println("2) Samouraï – PV élevés")
 		fmt.Println("3) Ninja    – agile")
+
 		switch readChoice(r) {
 		case "1", "humain":
 			return ClasseHumain
@@ -25,7 +27,12 @@ func chooseClass(r *bufio.Reader) Classe {
 	}
 }
 
-// Création du perso (init + capacité + skill de base)
+// ====== Initialisation du personnage ======
+//
+// - Copie l’inventaire de départ SANS dépasser la capacité
+// - Donne 100 or au départ (T11)
+// - Capacité de base = BaseInventoryCap (T12+)
+// - Apprend la technique de base "Tempête d'acier"
 func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[string]int) Character {
 	ch := Character{
 		Name:        name,
@@ -35,34 +42,39 @@ func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[stri
 		HP:          clamp(hp, 0, hpMax),
 		Inventory:   map[string]int{},
 		Skills:      []string{},
-		Gold:        100,              // T11
-		CapMax:      BaseInventoryCap, // T12+
+		Gold:        100,
+		CapMax:      BaseInventoryCap,
 		InvUpgrades: 0,
 	}
-	// inventaire de départ (respect capacité)
+
+	// Copie sécurisée de l’inventaire (respect de la capacité)
 	for k, v := range inv {
 		if v <= 0 {
 			continue
 		}
-		if !addInventory(&ch, k, v) {
+		if !addInventory(&ch, k, v) { // addInventory sera défini dans inventory.go
 			break
 		}
 	}
-	// technique de base
-	learnSkill(&ch, "Tempête d'acier")
+
+	// Technique de base
+	_ = learnSkill(&ch, "Tempête d'acier") // learnSkill sera défini dans skills.go
 	return ch
 }
 
-// Création interactive (nom + classe)
+// ====== Création interactive (nom + classe) ======
+
 func createCharacterInteractive(r *bufio.Reader) Character {
 	fmt.Println(CYellow + "=== Création de personnage ===" + CReset)
+
 	name := readLine(r, "Entre ton nom: ")
 	if name == "" {
 		name = "Yazuo"
 	}
+
 	class := chooseClass(r)
 
-	// bonus par classe
+	// Petits bonus simples par classe
 	hpMax := 100
 	switch class {
 	case ClasseSamurai:
@@ -70,8 +82,11 @@ func createCharacterInteractive(r *bufio.Reader) Character {
 	case ClasseNinja:
 		hpMax = 90
 	}
+
 	startHP := hpMax * 40 / 100
-	startInv := map[string]int{"RedBull": 3}
+	startInv := map[string]int{
+		"RedBull": 3, // l’humour reste 🤙
+	}
 
 	ch := initCharacter(name, class, 1, hpMax, startHP, startInv)
 	fmt.Println(CGreen + "Personnage créé !" + CReset)

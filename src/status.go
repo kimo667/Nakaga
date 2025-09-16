@@ -1,8 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
-// Mort / revive (T8)
+/* ====== Mort / revive (T8) ====== */
+
 func isDead(c *Character) bool {
 	if c.HP <= 0 {
 		fmt.Println(CRed + "\n*** WASTED ***" + CReset)
