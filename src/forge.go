@@ -1,0 +1,80 @@
+package main
+
+import "fmt"
+
+// Recettes : item crafté → ressources
+var forgeRecipes = map[string]map[string]int{
+	"Chapeau de l’aventurier": {
+		"Plume de Corbeau": 1,
+		"Cuir de Sanglier": 1,
+	},
+	"Tunique de l’aventurier": {
+		"Fourrure de Loup": 2,
+		"Peau de Troll":    1,
+	},
+	"Bottes de l’aventurier": {
+		"Fourrure de Loup": 1,
+		"Cuir de Sanglier": 1,
+	},
+}
+
+func hasResources(c *Character, recipe map[string]int) bool {
+	for item, qty := range recipe {
+		if c.Inventory[item] < qty {
+			return false
+		}
+	}
+	return true
+}
+
+func consumeResources(c *Character, recipe map[string]int) {
+	for item, qty := range recipe {
+		removeInventory(c, item, qty)
+	}
+}
+
+func blacksmithMenu(c *Character, r Reader) {
+	for {
+		fmt.Println("\n=== FORGERON ===")
+		fmt.Printf("Votre or : %d\n", c.Gold)
+		fmt.Println("Que voulez-vous fabriquer ? (5 or par objet)")
+
+		idx := 1
+		itemList := []string{}
+		for item := range forgeRecipes {
+			fmt.Printf("%d) %s\n", idx, item)
+			itemList = append(itemList, item)
+			idx++
+		}
+		fmt.Println("9) Retour")
+
+		choice := readChoice(r)
+		if choice == "9" || choice == "retour" || choice == "back" {
+			return
+		}
+
+		var selected int
+		fmt.Sscanf(choice, "%d", &selected)
+
+		if selected >= 1 && selected <= len(itemList) {
+			item := itemList[selected-1]
+			recipe := forgeRecipes[item]
+
+			if c.Gold < 5 {
+				fmt.Println("Pas assez d’or pour fabriquer cet objet !")
+				continue
+			}
+			if !hasResources(c, recipe) {
+				fmt.Println("Ressources insuffisantes pour fabriquer :", item)
+				continue
+			}
+
+			c.Gold -= 5
+			consumeResources(c, recipe)
+			addInventory(c, item, 1)
+			fmt.Printf("Vous avez fabriqué : %s (reste %d or).\n", item, c.Gold)
+		} else {
+			fmt.Println("Choix invalide.")
+		}
+	}
+}
