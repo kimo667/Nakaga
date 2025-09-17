@@ -58,16 +58,38 @@ func (m *Monster) Heal(amount int) {
 	fmt.Printf("%s a maintenant %d/%d PV\n\n", m.Name, m.CurrentHP, m.MaxHP)
 }
 
-func entrainement() {
+func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	player := Monster{Name: "Joueur", MaxHP: 100, CurrentHP: 100, AttackPower: 20}
-	monster := Monster{Name: "Gobelin", MaxHP: 50, CurrentHP: 50, AttackPower: 15}
+	monster := Monster{Name: "Sbire", MaxHP: 50, CurrentHP: 50, AttackPower: 15}
+
+	// Monologue du Sbire
+	fmt.Println("=== Monologue du Sbire ===")
+	fmt.Println("Salut, jeune héros ! Je suis là pour t'entraîner, car ton destin est grand.")
+	fmt.Println("Seul toi peux vaincre LE GRAND YONE, qui menace ce monde et qui n'arrete pas d'acrroire ses pouvoirs.")
+	fmt.Println("Seul toi, et tes pouvoirs puissent le battre pour ramener l'ordre dans le monde de Nakaga")
+	fmt.Println("Alors, es-tu prêt à commencer ton entraînement ? (oui/non)")
+
+	var ready string
+	for {
+		fmt.Print("Votre réponse : ")
+		fmt.Scanln(&ready)
+		if ready == "oui" || ready == "Oui" {
+			fmt.Println("Très bien ! Que l'entraînement commence !\n")
+			break
+		} else if ready == "non" || ready == "Non" {
+			fmt.Println("Prends ton courage et reviens quand tu seras prêt...")
+			return // quitte le programme si le joueur n'est pas prêt
+		} else {
+			fmt.Println("Répondez par 'oui' ou 'non'.")
+		}
+	}
 
 	var choice int
 
 	for player.CurrentHP > 0 && monster.CurrentHP > 0 {
-		fmt.Println("=== Tour du joueur ===")
+		fmt.Println("=== À ton tour ! ===")
 		fmt.Println("1. Attaque normale")
 		fmt.Println("2. Attaque spéciale")
 		fmt.Println("3. Se soigner")
@@ -92,7 +114,7 @@ func entrainement() {
 		}
 
 		// Tour du monstre (simple AI)
-		fmt.Println("=== Tour du monstre ===")
+		fmt.Println("=== Tour du Sbire ===")
 		monsterChoice := rand.Intn(3) + 1
 		switch monsterChoice {
 		case 1:
