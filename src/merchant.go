@@ -53,10 +53,10 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 			fmt.Println("4) Livre de Sort : Mur de vent — (ÉPUISÉ)")
 		}
 		// Matériaux
-		fmt.Println("5) Fourrure d'Okami — 4 or")
-		fmt.Println("6) Peau d'Oni — 7 or")
-		fmt.Println("7) Cuir d'Inoshishi — 3 or")
-		fmt.Println("8) Plume de Karasu — 1 or")
+		fmt.Println("5) Fourrure de Loup — 4 or")
+		fmt.Println("6) Peau de Troll — 7 or")
+		fmt.Println("7) Cuir de Sanglier — 3 or")
+		fmt.Println("8) Plume de Corbeau — 1 or")
 		// Upgrade capacité
 		fmt.Printf("10) Augmentation d’inventaire — 30 or (utilisée %d/%d)\n", c.InvUpgrades, MaxInventoryUpgrades)
 
@@ -89,13 +89,13 @@ func merchantMenu(c *Character, r *bufio.Reader) {
 			}
 
 		case "5":
-			_ = buyItem(c, "Fourrure d'Okami", 4, 1)
+			_ = buyItem(c, "Fourrure de Loup", 4, 1)
 		case "6":
-			_ = buyItem(c, "Peau d'Oni", 7, 1)
+			_ = buyItem(c, "Peau de Troll", 7, 1)
 		case "7":
-			_ = buyItem(c, "Cuir d'Inoshishi", 3, 1)
+			_ = buyItem(c, "Cuir de Sanglier", 3, 1)
 		case "8":
-			_ = buyItem(c, "Plume de Karasu", 1, 1)
+			_ = buyItem(c, "Plume de Corbeau", 1, 1)
 
 		case "10":
 			if c.InvUpgrades >= MaxInventoryUpgrades {

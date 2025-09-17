@@ -7,17 +7,17 @@ import (
 
 // Liste des recettes : item → ressources nécessaires
 var forgeRecipes = map[string]map[string]int{
-	"Capuche du Shinobi": {
-		"Plume de Karasu":  1,
-		"Cuir d'Inoshishi": 1,
+	"Chapeau de l’aventurier": {
+		"Plume de Corbeau": 1,
+		"Cuir de Sanglier": 1,
 	},
-	"Veste du Shinobi": {
-		"Fourrure d'Okami": 2,
-		"Peau d'Oni":       1,
+	"Tunique de l’aventurier": {
+		"Fourrure de Loup": 2,
+		"Peau de Troll":    1,
 	},
-	"Tabi du Shinobi": {
-		"Fourrure d'Okami": 1,
-		"Cuir d'Inoshishi": 1,
+	"Bottes de l’aventurier": {
+		"Fourrure de Loup": 1,
+		"Cuir de Sanglier": 1,
 	},
 }
 
