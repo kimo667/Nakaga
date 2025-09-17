@@ -58,7 +58,7 @@ func (m *Monster) Heal(amount int) {
 	fmt.Printf("%s a maintenant %d/%d PV\n\n", m.Name, m.CurrentHP, m.MaxHP)
 }
 
-func main() {
+func entrainement() {
 	rand.Seed(time.Now().UnixNano())
 
 	player := Monster{Name: "Joueur", MaxHP: 100, CurrentHP: 100, AttackPower: 20}

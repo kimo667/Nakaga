@@ -121,15 +121,14 @@ func (p *Player) ShowStatus() {
 	p.ShowEquipment()
 }
 
-func main() {
+func Equipement() {
 	// Création joueur
 	player := NewPlayer(100)
 
 	// Équipements de départ
-	player.AddToInventory(Equipment{Name: "Chapeau de l’aventurier", Type: Head, HPBonus: 10})
-	player.AddToInventory(Equipment{Name: "Tunique de l’aventurier", Type: Body, HPBonus: 25})
-	player.AddToInventory(Equipment{Name: "Bottes de l’aventurier", Type: Feet, HPBonus: 15})
-	player.AddToInventory(Equipment{Name: "Chapeau magique", Type: Head, HPBonus: 20})
+	player.AddToInventory(Equipment{Name: "Capuche du Shinobi", Type: Head, HPBonus: 10})
+	player.AddToInventory(Equipment{Name: "Veste du Shinobi", Type: Body, HPBonus: 25})
+	player.AddToInventory(Equipment{Name: "Tabi du Shinobi", Type: Feet, HPBonus: 15})
 
 	fmt.Println("👋 Bienvenue dans le jeu d’équipement !")
 	fmt.Println("Commandes : inventory | equip <nom> | status | quit")

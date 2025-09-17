@@ -85,7 +85,7 @@ func createCharacterInteractive(r *bufio.Reader) Character {
 
 	startHP := hpMax * 40 / 100
 	startInv := map[string]int{
-		"RedBull": 3, // l’humour reste 🤙
+		"RedBull": 3,
 	}
 
 	ch := initCharacter(name, class, 1, hpMax, startHP, startInv)
