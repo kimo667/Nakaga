@@ -47,6 +47,9 @@ func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[stri
 		InvUpgrades: 0,
 	}
 
+	// 👇 base fixe de 100 PV pour le calcul des bonus d’équipement
+	ch.BaseHPMax = 100
+
 	// Copie sécurisée de l’inventaire (respect de la capacité)
 	for k, v := range inv {
 		if v <= 0 {
