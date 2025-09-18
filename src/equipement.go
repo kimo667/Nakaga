@@ -1,17 +1,23 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Objets équipables → slot
 var equipSlotByItem = map[string]string{
 	"Chapeau de l'aventurier": "Head",
 	"Tunique de l'aventurier": "Torso",
 	"Bottes de l'aventurier":  "Feet",
-	// Tu peux ajouter ici tes pièces Ninja/Samouraï si tu en as
+}
+
+func normalizeItemName(s string) string {
+	return strings.ReplaceAll(s, "’", "'")
 }
 
 func slotForItem(item string) (string, bool) {
-	s, ok := equipSlotByItem[item]
+	s, ok := equipSlotByItem[normalizeItemName(item)]
 	return s, ok
 }
 
@@ -22,11 +28,23 @@ func equipItem(c *Character, item string) {
 		fmt.Println(CRed + "Cet objet n’est pas équipable." + CReset)
 		return
 	}
-	if c.Inventory[item] <= 0 || !removeInventory(c, item, 1) {
+
+	itemNorm := normalizeItemName(item)
+
+	// retirer du sac (on essaie la version brute puis normalisée)
+	removed := removeInventory(c, item, 1)
+	if !removed && itemNorm != item {
+		removed = removeInventory(c, itemNorm, 1)
+		if removed {
+			item = itemNorm
+		}
+	}
+	if !removed {
 		fmt.Println(CRed + "Vous ne possédez pas cet objet." + CReset)
 		return
 	}
 
+	// équiper, rendre l’ancien au sac si besoin
 	switch slot {
 	case "Head":
 		if c.Equipment.Head != "" {
