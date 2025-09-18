@@ -1,7 +1,5 @@
 package main
 
-// ====== Types & constantes globales ======
-
 type Classe string
 
 const (
@@ -10,30 +8,36 @@ const (
 	ClasseNinja   Classe = "Ninja"
 )
 
-// Capacité d’inventaire et upgrades (T12+)
 const (
-	BaseInventoryCap     = 10 // capacité de base
-	InventoryUpgradeStep = 10 // +10 par upgrade
-	MaxInventoryUpgrades = 3  // max 3 upgrades
-)
+	BaseInventoryCap     = 10
+	InventoryUpgradeStep = 10
+	MaxInventoryUpgrades = 3
 
-// Effets & valeurs de gameplay
-const (
 	HealRedBull        = 20
 	PoisonTicks        = 3
 	PoisonDamagePerSec = 10
 )
 
-// Personnage
+// --------- ÉQUIPEMENT (slots) ----------
+type Equipment struct {
+	Head  string // tête
+	Torso string // torse
+	Feet  string // pieds
+}
+
+// --------- PERSONNAGE ----------
 type Character struct {
 	Name        string
 	Class       Classe
 	Level       int
 	HPMax       int
 	HP          int
+	BaseHPMax   int // base “nue” (sans bonus d’équipement)
 	Inventory   map[string]int
 	Skills      []string
-	Gold        int // (T11) initialisé plus tard
-	CapMax      int // capacité actuelle
-	InvUpgrades int // nb d’upgrades de capacité
+	Gold        int
+	CapMax      int
+	InvUpgrades int
+
+	Equipment Equipment // <<< DOIT exister
 }

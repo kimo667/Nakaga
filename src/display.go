@@ -69,5 +69,17 @@ func displayInfo(c Character) {
 		}
 	}
 
+	fmt.Println("Équipement :")
+	slot := func(lbl, v string) {
+		if v == "" {
+			fmt.Printf("  %-5s : (aucun)\n", lbl)
+		} else {
+			fmt.Printf("  %-5s : %s\n", lbl, v)
+		}
+	}
+	slot("Tête", c.Equipment.Head)
+	slot("Torse", c.Equipment.Torso)
+	slot("Pieds", c.Equipment.Feet)
+
 	displayInventory(c)
 }

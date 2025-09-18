@@ -1,0 +1,89 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+)
+
+func equipment_menu(c *Character, r *bufio.Reader) { // alias
+	equipmentMenu(c, r)
+}
+
+func equipmentMenu(c *Character, r *bufio.Reader) {
+	for {
+		fmt.Println("\n===== ÉQUIPEMENT =====")
+		// état actuel
+		fmt.Println("Actuellement portés :")
+		show := func(lbl, v string) {
+			if v == "" {
+				fmt.Printf("  %-5s : (aucun)\n", lbl)
+			} else {
+				fmt.Printf("  %-5s : %s\n", lbl, v)
+			}
+		}
+		show("Tête", c.Equipment.Head)
+		show("Torse", c.Equipment.Torso)
+		show("Pieds", c.Equipment.Feet)
+		fmt.Printf("PV max actuel : %d\n", c.HPMax)
+
+		// options dynamiques
+		type opt struct {
+			key, label string
+			run        func()
+		}
+		opts := []opt{}
+		add := func(label string, fn func()) {
+			opts = append(opts, opt{
+				key:   fmt.Sprintf("%d", len(opts)+1),
+				label: label,
+				run:   fn,
+			})
+		}
+
+		// Proposer d'équiper tous les objets équipables possédés
+		for item, slot := range equipSlotByItem {
+			if c.Inventory[item] > 0 {
+				it, sl := item, slot // capture
+				add("Équiper "+it+" ("+sl+")", func() { equipItem(c, it) })
+			}
+		}
+
+		// Proposer de déséquiper chaque slot si occupé
+		if c.Equipment.Head != "" {
+			add("Déséquiper (Tête)", func() { unequipSlot(c, "Head") })
+		}
+		if c.Equipment.Torso != "" {
+			add("Déséquiper (Torse)", func() { unequipSlot(c, "Torso") })
+		}
+		if c.Equipment.Feet != "" {
+			add("Déséquiper (Pieds)", func() { unequipSlot(c, "Feet") })
+		}
+
+		// Affichage
+		if len(opts) == 0 {
+			fmt.Println("(Aucune action : aucun objet équipable dans l’inventaire.)")
+		} else {
+			for _, o := range opts {
+				fmt.Printf("%s) %s\n", o.key, o.label)
+			}
+		}
+		fmt.Println("9) Retour")
+
+		// Saisie
+		choice := readChoice(r)
+		if choice == "9" || choice == "retour" || choice == "back" {
+			return
+		}
+		ok := false
+		for _, o := range opts {
+			if choice == o.key {
+				o.run()
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			fmt.Println("Choix invalide.")
+		}
+	}
+}

@@ -16,26 +16,57 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 		}
 		opts := []opt{}
 		add := func(label string, fn func()) {
-			opts = append(opts, opt{key: fmt.Sprintf("%d", len(opts)+1), label: label, run: fn})
+			opts = append(opts, opt{
+				key:   fmt.Sprintf("%d", len(opts)+1),
+				label: label,
+				run:   fn,
+			})
 		}
 
-		// RedBull
+		// --- Consommables / livres : n’afficher que si possédés ---
 		if c.Inventory["RedBull"] > 0 {
-			add("Boire une RedBull (+20 PV)", func() { takeRedBull(c); isDead(c) })
+			add("Boire une RedBull (+20 PV)", func() {
+				takeRedBull(c)
+				isDead(c)
+			})
 		}
-		// Potion de vie
 		if c.Inventory["Potion de vie"] > 0 {
-			add("Boire une Potion de vie (+20 PV)", func() { usePotionVie(c) })
+			add("Boire une Potion de vie (+20 PV)", func() {
+				usePotionVie(c)
+				isDead(c)
+			})
 		}
-		// Potion de poison
 		if c.Inventory["Potion de poison"] > 0 {
-			add("Utiliser une Potion de poison (10 dmg/s ×3)", func() { poisonPot(c) })
+			add("Utiliser une Potion de poison (10 dmg/s ×3)", func() {
+				poisonPot(c)
+			})
 		}
-		// Livre de sort
 		if c.Inventory["Livre de Sort : Mur de vent"] > 0 {
-			add("Utiliser 'Livre de Sort : Mur de vent'", func() { useSpellBookWind(c) })
+			add("Utiliser 'Livre de Sort : Mur de vent'", func() {
+				useSpellBookWind(c)
+			})
 		}
 
+		// --- ÉQUIPEMENT : “Équiper …” pour chaque objet équipable possédé ---
+		for item := range equipSlotByItem {
+			if c.Inventory[item] > 0 {
+				it := item // capture
+				add("Équiper "+it, func() { equipItem(c, it) })
+			}
+		}
+
+		// --- Déséquiper si quelque chose est porté ---
+		if c.Equipment.Head != "" {
+			add("Déséquiper (Tête)", func() { unequipSlot(c, "Head") })
+		}
+		if c.Equipment.Torso != "" {
+			add("Déséquiper (Torse)", func() { unequipSlot(c, "Torso") })
+		}
+		if c.Equipment.Feet != "" {
+			add("Déséquiper (Pieds)", func() { unequipSlot(c, "Feet") })
+		}
+
+		// Affichage du sous-menu
 		if len(opts) == 0 {
 			fmt.Println("(Aucune action disponible)")
 		} else {
@@ -45,6 +76,7 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 		}
 		fmt.Println("9) Retour")
 
+		// Lecture et exécution
 		ch := readChoice(r)
 		if ch == "9" || ch == "retour" || ch == "back" {
 			return
