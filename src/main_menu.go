@@ -33,7 +33,7 @@ func mainMenu(c *Character, r *bufio.Reader) bool {
 		StartTrainingFight()
 
 	case "6", "donjon", "dungeon", "boss", "yone":
-		StartBossFight()
+		StartAllBossFights()
 
 	case "7", "q", "quit", "quitter", "exit":
 		fmt.Println("Au revoir !")

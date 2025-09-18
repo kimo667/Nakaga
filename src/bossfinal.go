@@ -8,70 +8,17 @@ import (
 	"github.com/eiannone/keyboard"
 )
 
-// On utilise la struct Monster définie ailleurs :
+// // Monster struct (pour rappel)
 // type Monster struct {
-//     Name        string
-//     MaxHP       int
-//     CurrentHP   int
-//     AttackPower int
-// }
-
-// ====================
-// UI PV
-// ====================
-// func hpBar(current, max int) string {
-// 	if max <= 0 {
-// 		max = 1
-// 	}
-// 	if current < 0 {
-// 		current = 0
-// 	}
-// 	if current > max {
-// 		current = max
-// 	}
-// 	percent := float64(current) / float64(max)
-// 	var color string
-// 	switch {
-// 	case percent > 0.5:
-// 		color = "#00FF00"
-// 	case percent > 0.2:
-// 		color = "#FFFF00"
-// 	default:
-// 		color = "#FF0000"
-// 	}
-// 	const totalWidth = 20
-// 	filled := current * totalWidth / max
-// 	empty := totalWidth - filled
-// 	bar := lipgloss.NewStyle().Background(lipgloss.Color(color)).Width(filled).Render("")
-// 	rest := lipgloss.NewStyle().Background(lipgloss.Color("#555555")).Width(empty).Render("")
-// 	return bar + rest
-// }
-
-// func displayHP(player, mob *Monster) {
-// 	left := fmt.Sprintf("%s : [%s] %d/%d PV", mob.Name, hpBar(mob.CurrentHP, mob.MaxHP), mob.CurrentHP, mob.MaxHP)
-// 	right := fmt.Sprintf("%s : [%s] %d/%d PV", player.Name, hpBar(player.CurrentHP, player.MaxHP), player.CurrentHP, player.MaxHP)
-// 	totalWidth := 60
-// 	space := totalWidth - len(left) - len(right)
-// 	if space < 2 {
-// 		space = 2
-// 	}
-// 	fmt.Println(left + strings.Repeat(" ", space) + right + "\n")
+// 	Name        string
+// 	MaxHP       int
+// 	CurrentHP   int
+// 	AttackPower int
 // }
 
 // // ====================
-// // Effets visuels
+// // Fonctions d’attaque et utilitaires (déjà présentes dans ton code)
 // // ====================
-// func slowPrint(s string, d time.Duration) {
-// 	for _, c := range s {
-// 		fmt.Printf("%c", c)
-// 		time.Sleep(d)
-// 	}
-// 	fmt.Println()
-// }
-
-// ====================
-// Actions
-// ====================
 // func (m *Monster) Attack(target *Monster) int {
 // 	damage := rand.Intn(m.AttackPower) + 1
 // 	if rand.Intn(100) < 10 {
@@ -86,7 +33,7 @@ import (
 // }
 
 // func (m *Monster) SpecialAttack(target *Monster) int {
-// 	if rand.Intn(100) < 20 { // 20% de raté
+// 	if rand.Intn(100) < 20 {
 // 		slowPrint(fmt.Sprintf("%s a raté son attaque spéciale !", m.Name), 30*time.Millisecond)
 // 		return 0
 // 	}
@@ -103,7 +50,26 @@ import (
 // }
 
 // // ====================
-// // Système d’inventaire
+// // Slow print
+// // ====================
+// func slowPrint(s string, d time.Duration) {
+// 	for _, c := range s {
+// 		fmt.Printf("%c", c)
+// 		time.Sleep(d)
+// 	}
+// 	fmt.Println()
+// }
+
+// // ====================
+// // Affichage HP simple (sans Lipgloss pour simplifier ici)
+// // ====================
+// func displayHP(player, mob *Monster) {
+// 	fmt.Printf("%s : %d/%d PV\n", mob.Name, mob.CurrentHP, mob.MaxHP)
+// 	fmt.Printf("%s : %d/%d PV\n\n", player.Name, player.CurrentHP, player.MaxHP)
+// }
+
+// // ====================
+// // Inventaire
 // // ====================
 // func showInventory(player *Monster, inventory map[string]int) {
 // 	for {
@@ -150,21 +116,9 @@ import (
 // }
 
 // ====================
-// Combat contre le boss final
+// Fonction générique pour combattre un boss
 // ====================
-func StartBossFight() {
-	rand.Seed(time.Now().UnixNano())
-
-	player := &Monster{Name: "Joueur", MaxHP: 150, CurrentHP: 150, AttackPower: 25}
-	playerInventory := map[string]int{
-		"Potion": 5,
-	}
-
-	boss := &Monster{Name: "Yone", MaxHP: 500, CurrentHP: 300, AttackPower: 50}
-
-	slowPrint("=== Boss Final : YONE ===", 50*time.Millisecond)
-	slowPrint("Yone apparaît devant vous ! Préparez-vous au combat !", 50*time.Millisecond)
-
+func StartBossFight(player *Monster, boss *Monster, inventory map[string]int) bool {
 	opts := []string{"Attaque normale", "Attaque spéciale", "Inventaire", "Fuir"}
 	selected := 0
 
@@ -174,7 +128,7 @@ func StartBossFight() {
 
 	for player.CurrentHP > 0 && boss.CurrentHP > 0 {
 		fmt.Print("\033[H\033[2J")
-		fmt.Println("=== Combat contre Yone ===")
+		fmt.Println("=== Combat ===")
 		displayHP(player, boss)
 		fmt.Println("=== À ton tour ! ===")
 		for i, o := range opts {
@@ -201,17 +155,6 @@ func StartBossFight() {
 				case keyboard.KeyEnter:
 					actionChosen = true
 				}
-				fmt.Print("\033[H\033[2J")
-				fmt.Println("=== Combat contre Yone ===")
-				displayHP(player, boss)
-				fmt.Println("=== À ton tour ! ===")
-				for i, o := range opts {
-					prefix := "  "
-					if i == selected {
-						prefix = "→ "
-					}
-					fmt.Println(prefix + o)
-				}
 			} else {
 				var ch int
 				fmt.Printf("Choisis (1: Attaque, 2: Spéciale, 3: Inventaire, 4: Fuir) > ")
@@ -232,22 +175,20 @@ func StartBossFight() {
 				slowPrint(fmt.Sprintf("%s inflige %d dégâts à %s !", player.Name, damage, boss.Name), 30*time.Millisecond)
 			}
 		case 2:
-			showInventory(player, playerInventory)
+			showInventory(player, inventory)
 			playerTurn = false
 		case 3:
 			slowPrint("Vous fuyez le combat !", 50*time.Millisecond)
-			return
+			return false
 		}
 
 		if boss.CurrentHP <= 0 {
-			slowPrint("Yone a été vaincu ! Vous êtes le héros !", 50*time.Millisecond)
-			break
+			slowPrint(fmt.Sprintf("%s a été vaincu !", boss.Name), 50*time.Millisecond)
+			return true
 		}
 
 		if playerTurn {
-			slowPrint(fmt.Sprintf("=== Tour de %s ===", boss.Name), 50*time.Millisecond)
 			time.Sleep(500 * time.Millisecond)
-
 			if rand.Intn(100) < 40 {
 				damage := boss.SpecialAttack(player)
 				slowPrint(fmt.Sprintf("%s utilise une attaque spéciale et inflige %d dégâts !", boss.Name, damage), 30*time.Millisecond)
@@ -257,12 +198,37 @@ func StartBossFight() {
 			}
 
 			if player.CurrentHP <= 0 {
-				slowPrint("Vous avez été vaincu par Yone...", 50*time.Millisecond)
-				break
+				slowPrint("Vous avez été vaincu...", 50*time.Millisecond)
+				return false
 			}
 			time.Sleep(500 * time.Millisecond)
 		}
 	}
+	return player.CurrentHP > 0
+}
 
-	fmt.Println("\nFin du combat contre Yone.")
+// ====================
+// Fonction principale des combats de boss
+// ====================
+func StartAllBossFights() {
+	rand.Seed(time.Now().UnixNano())
+
+	player := &Monster{Name: "Joueur", MaxHP: 150, CurrentHP: 150, AttackPower: 25}
+	playerInventory := map[string]int{"Potion": 5}
+
+	bosses := []*Monster{
+		{Name: "Rogue Ninja", MaxHP: 200, CurrentHP: 200, AttackPower: 20},
+		{Name: "Dragon de Feu", MaxHP: 300, CurrentHP: 300, AttackPower: 35},
+		{Name: "Yone", MaxHP: 500, CurrentHP: 500, AttackPower: 50},
+	}
+
+	for _, boss := range bosses {
+		success := StartBossFight(player, boss, playerInventory)
+		if !success {
+			slowPrint("Vous avez échoué à vaincre le boss. Recommencez !", 50*time.Millisecond)
+			return
+		}
+	}
+
+	slowPrint("Félicitations ! Vous avez vaincu tous les boss !", 50*time.Millisecond)
 }
