@@ -159,7 +159,7 @@ func showInventory(player *Monster, inventory map[string]int) {
 // ====================
 // Combat d’entraînement
 // ====================
-func StartTraining() {
+func StartTrainingFight() {
 	rand.Seed(time.Now().UnixNano())
 
 	player := &Monster{Name: "Joueur", MaxHP: 100, CurrentHP: 100, AttackPower: 20}

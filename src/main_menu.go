@@ -3,28 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-
-	"github.com/charmbracelet/bubbles/list"
 )
-
-type character struct {
-	Name  string
-	Level int
-	HP    int
-}
-
-// Menu item
-type menuItem string
-
-func (i menuItem) Title() string       { return string(i) }
-func (i menuItem) Description() string { return "" }
-func (i menuItem) FilterValue() string { return string(i) }
-
-// Bubble Tea model
-type model struct {
-	list      list.Model
-	character Character
-}
 
 // Menu principal
 func mainMenu(c *Character, r *bufio.Reader) bool {
@@ -34,7 +13,8 @@ func mainMenu(c *Character, r *bufio.Reader) bool {
 	fmt.Println("3) Marchand")
 	fmt.Println("4) Forgeron")
 	fmt.Println("5) Entraînement (combat d'essai)")
-	fmt.Println("6) Quitter")
+	fmt.Println("6) Accéder au donjon (Boss Final : Yone)")
+	fmt.Println("7) Quitter")
 
 	switch readChoice(r) {
 	case "1", "infos", "information":
@@ -44,16 +24,18 @@ func mainMenu(c *Character, r *bufio.Reader) bool {
 		inventoryMenu(c, r)
 
 	case "3", "marchand", "shop":
-		merchantMenu(c, r)
+		merchantMenu(c)
 
 	case "4", "forgeron", "forge":
 		blacksmithMenu(c, r)
 
 	case "5", "entrainement", "entraînement", "training", "combat":
-		// Lancement du mode entraînement
-		StartTraining()
+		StartTrainingFight()
 
-	case "6", "q", "quit", "quitter", "exit":
+	case "6", "donjon", "dungeon", "boss", "yone":
+		StartBossFight()
+
+	case "7", "q", "quit", "quitter", "exit":
 		fmt.Println("Au revoir !")
 		return false
 
@@ -62,5 +44,4 @@ func mainMenu(c *Character, r *bufio.Reader) bool {
 	}
 
 	return true
-
 }
