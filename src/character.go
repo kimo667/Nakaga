@@ -3,29 +3,9 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"strings"
+	"unicode"
 )
-
-// ====== Choix de classe ======
-
-func chooseClass(r *bufio.Reader) Classe {
-	for {
-		fmt.Println(CYellow + "Choisis ta classe :" + CReset)
-		fmt.Println("1) Humain  – équilibré")
-		fmt.Println("2) Samouraï – PV élevés")
-		fmt.Println("3) Ninja    – agile")
-
-		switch readChoice(r) {
-		case "1", "humain":
-			return ClasseHumain
-		case "2", "samourai", "samouraï", "samurai":
-			return ClasseSamurai
-		case "3", "ninja":
-			return ClasseNinja
-		default:
-			fmt.Println(CRed + "Choix invalide." + CReset)
-		}
-	}
-}
 
 // ====== Initialisation du personnage ======
 //
@@ -47,10 +27,9 @@ func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[stri
 		InvUpgrades: 0,
 	}
 
-	// 👇 base fixe de 100 PV pour le calcul des bonus d’équipement
-	ch.BaseHPMax = 100
-
-	// Copie sécurisée de l’inventaire (respect de la capacité)
+	ch.BaseHPMax = hpMax
+	// Copie sécurisée de l’inventaire (respect de l
+	// a capacité)
 	for k, v := range inv {
 		if v <= 0 {
 			continue
@@ -67,31 +46,59 @@ func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[stri
 
 // ====== Création interactive (nom + classe) ======
 
+// Création interactive d’un personnage
 func createCharacterInteractive(r *bufio.Reader) Character {
-	fmt.Println(CYellow + "=== Création de personnage ===" + CReset)
-
-	name := readLine(r, "Entre ton nom: ")
+	// 1) Nom du perso (prompt unique via readLine)
+	rawName := readLine(r, "Entrez le nom de votre personnage : ")
+	name := strings.TrimSpace(rawName)
 	if name == "" {
-		name = "Yazuo"
+		name = "Yazuo" // nom par défaut si l'utilisateur valide sans rien
+	} else {
+		// Majuscule sur la première lettre, le reste inchangé
+		runes := []rune(name)
+		runes[0] = unicode.ToUpper(runes[0])
+		name = string(runes)
 	}
 
-	class := chooseClass(r)
+	// 2) Choix de classe — texte “comme avant”
+	fmt.Println("Choisissez une classe :")
+	fmt.Println("1) Humain ")
+	fmt.Println("2) Samurai ")
+	fmt.Println("3) Ninja   ")
+	classChoice := readChoice(r)
 
-	// Petits bonus simples par classe
-	hpMax := 100
+	var class Classe
+	switch classChoice {
+	case "1", "humain":
+		class = ClasseHumain
+	case "2", "samurai":
+		class = ClasseSamurai
+	case "3", "ninja":
+		class = ClasseNinja
+	default:
+		fmt.Println(CRed + "Choix invalide. Classe par défaut : Humain." + CReset)
+		class = ClasseHumain
+	}
+
+	// 3) PV init selon classe (tu peux remettre tes valeurs d’avant)
+	hpMax := 110
 	switch class {
 	case ClasseSamurai:
-		hpMax = 110
+		hpMax = 175
 	case ClasseNinja:
 		hpMax = 90
 	}
 
-	startHP := hpMax * 40 / 100
-	startInv := map[string]int{
-		"RedBull": 3, // l’humour reste 🤙
+	// 4) Inventaire de départ (à ta convenance)
+	inv := map[string]int{
+		"Potion de vie": 1,
 	}
 
-	ch := initCharacter(name, class, 1, hpMax, startHP, startInv)
+	// 5) Création du perso
+	player := initCharacter(name, class, 1, hpMax, hpMax, inv)
+
+	// (si tu veux un petit message fin)
 	fmt.Println(CGreen + "Personnage créé !" + CReset)
-	return ch
+
+	return player
 }

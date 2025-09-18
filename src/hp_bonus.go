@@ -7,7 +7,6 @@ var equipHPBonus = map[string]int{
 	"Bottes de l'aventurier":  15,
 }
 
-// Calcule la somme des bonus d'équipement
 func equipmentHPBonus(c Character) int {
 	bonus := 0
 	if c.Equipment.Head != "" {
@@ -22,14 +21,13 @@ func equipmentHPBonus(c Character) int {
 	return bonus
 }
 
-// Recalcule HPMax = base (100) + bonus équipements
+// HPMax = BaseHPMax (donnée par la classe) + bonus d’équipement
 func recalcHPMax(c *Character) {
+	// sécurité : si jamais BaseHPMax n'a pas été posé, on retombe sur l'actuel
 	if c.BaseHPMax == 0 {
-		c.BaseHPMax = 100 // sécurité : base fixée à 100
+		c.BaseHPMax = c.HPMax
 	}
 	c.HPMax = c.BaseHPMax + equipmentHPBonus(*c)
-
-	// Clamp des PV actuels si nécessaire
 	if c.HP > c.HPMax {
 		c.HP = c.HPMax
 	}
