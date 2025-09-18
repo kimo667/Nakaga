@@ -10,6 +10,9 @@ import (
 	"github.com/eiannone/keyboard"
 )
 
+// ====================
+// Définition du monstre/joueur
+// ====================
 type Monster struct {
 	Name        string
 	MaxHP       int
@@ -17,8 +20,9 @@ type Monster struct {
 	AttackPower int
 }
 
-// ===== UI PV =====
-
+// ====================
+// UI PV
+// ====================
 func hpBar(current, max int) string {
 	if max <= 0 {
 		max = 1
@@ -58,6 +62,9 @@ func displayHP(player, mob *Monster) {
 	fmt.Println(left + strings.Repeat(" ", space) + right + "\n")
 }
 
+// ====================
+// Effets visuels
+// ====================
 func slowPrint(s string, d time.Duration) {
 	for _, c := range s {
 		fmt.Printf("%c", c)
@@ -66,9 +73,10 @@ func slowPrint(s string, d time.Duration) {
 	fmt.Println()
 }
 
-// ===== Actions =====
-
-func (m *Monster) Attack(target *Monster) {
+// ====================
+// Actions
+// ====================
+func (m *Monster) Attack(target *Monster) int {
 	damage := rand.Intn(m.AttackPower) + 1
 	if rand.Intn(100) < 10 {
 		damage *= 2
@@ -78,12 +86,13 @@ func (m *Monster) Attack(target *Monster) {
 	if target.CurrentHP < 0 {
 		target.CurrentHP = 0
 	}
+	return damage
 }
 
-func (m *Monster) SpecialAttack(target *Monster) {
+func (m *Monster) SpecialAttack(target *Monster) int {
 	if rand.Intn(100) < 25 {
 		slowPrint(fmt.Sprintf("%s a raté son attaque spéciale !", m.Name), 30*time.Millisecond)
-		return
+		return 0
 	}
 	damage := rand.Intn(m.AttackPower*2) + m.AttackPower
 	if rand.Intn(100) < 15 {
@@ -94,26 +103,75 @@ func (m *Monster) SpecialAttack(target *Monster) {
 	if target.CurrentHP < 0 {
 		target.CurrentHP = 0
 	}
+	return damage
 }
 
-func (m *Monster) Heal(amount int) {
-	m.CurrentHP += amount
-	if m.CurrentHP > m.MaxHP {
-		m.CurrentHP = m.MaxHP
+// ====================
+// Système d’inventaire
+// ====================
+func showInventory(player *Monster, inventory map[string]int) {
+	for {
+		totalItems := 0
+		for _, qty := range inventory {
+			totalItems += qty
+		}
+		capMax := 10
+		fmt.Println("===== INVENTAIRE =====")
+		fmt.Printf("Inventaire (%d/%d) :\n", totalItems, capMax)
+		if totalItems == 0 {
+			fmt.Println("  (vide)")
+		} else {
+			i := 1
+			names := []string{}
+			for name, qty := range inventory {
+				fmt.Printf("  %d) %s x%d\n", i, name, qty)
+				names = append(names, name)
+				i++
+			}
+		}
+		fmt.Println("9) Retour")
+		var choice int
+		fmt.Print("> ")
+		fmt.Scan(&choice)
+		if choice == 9 {
+			break // on sort de l'inventaire sans passer le tour
+		}
+		// utilisation d'un objet
+		i := 1
+		for name := range inventory {
+			if i == choice {
+				fmt.Printf("Vous utilisez %s ! (+20 PV)\n", name)
+				player.CurrentHP += 20
+				if player.CurrentHP > player.MaxHP {
+					player.CurrentHP = player.MaxHP
+				}
+				inventory[name]--
+				if inventory[name] <= 0 {
+					delete(inventory, name)
+				}
+				break
+			}
+			i++
+		}
 	}
 }
 
-// ===== Entrée entraînement, appelée depuis le menu =====
-
+// ====================
+// Combat d’entraînement
+// ====================
 func StartTraining() {
 	rand.Seed(time.Now().UnixNano())
 
 	player := &Monster{Name: "Joueur", MaxHP: 100, CurrentHP: 100, AttackPower: 20}
-	mob := &Monster{Name: "Sbire", MaxHP: 50, CurrentHP: 50, AttackPower: 15}
+	playerInventory := map[string]int{
+		"RedBull": 3, // exemple d'inventaire
+	}
 
-	fmt.Println("=== Monologue du Sbire ===")
-	fmt.Println("Salut, jeune héros ! Je suis là pour t'entraîner.")
-	fmt.Println("Es-tu prêt à commencer ton entraînement ? (oui/non)")
+	mob := &Monster{Name: "Gobelin d’entrainement", MaxHP: 50, CurrentHP: 50, AttackPower: 15}
+
+	fmt.Println("=== Monologue du Gobelin ===")
+	slowPrint("Salut ! Je vais t'entraîner au combat.", 50*time.Millisecond)
+	slowPrint("Es-tu prêt ? (oui/non)", 50*time.Millisecond)
 	var ready string
 	fmt.Scanln(&ready)
 	if strings.ToLower(strings.TrimSpace(ready)) != "oui" {
@@ -121,7 +179,7 @@ func StartTraining() {
 		return
 	}
 
-	opts := []string{"Attaque normale", "Attaque spéciale", "Se soigner"}
+	opts := []string{"Attaque normale", "Attaque spéciale", "Inventaire", "Fuir"}
 	selected := 0
 
 	err := keyboard.Open()
@@ -141,9 +199,9 @@ func StartTraining() {
 			fmt.Println(prefix + o)
 		}
 
-		if keyboardOpened {
-			actionChosen := false
-			for !actionChosen {
+		actionChosen := false
+		for !actionChosen {
+			if keyboardOpened {
 				_, key, _ := keyboard.GetKey()
 				switch key {
 				case keyboard.KeyArrowUp:
@@ -155,20 +213,8 @@ func StartTraining() {
 						selected++
 					}
 				case keyboard.KeyEnter:
-					switch selected {
-					case 0:
-						player.Attack(mob)
-						slowPrint(fmt.Sprintf("%s attaque %s !", player.Name, mob.Name), 30*time.Millisecond)
-					case 1:
-						player.SpecialAttack(mob)
-						slowPrint(fmt.Sprintf("%s utilise une attaque spéciale !", player.Name), 30*time.Millisecond)
-					case 2:
-						player.Heal(20)
-						slowPrint(fmt.Sprintf("%s se soigne de 20 PV !", player.Name), 30*time.Millisecond)
-					}
 					actionChosen = true
 				}
-
 				fmt.Print("\033[H\033[2J")
 				fmt.Println("=== Combat ===")
 				displayHP(player, mob)
@@ -180,22 +226,32 @@ func StartTraining() {
 					}
 					fmt.Println(prefix + o)
 				}
+			} else {
+				var ch int
+				fmt.Print("Choisis (1: Attaque, 2: Spéciale, 3: Inventaire, 4: Fuir) > ")
+				fmt.Scan(&ch)
+				selected = ch - 1
+				actionChosen = true
 			}
-		} else {
-			var ch int
-			fmt.Print("Choisis (1: Attaque, 2: Spéciale, 3: Soin) > ")
-			fmt.Scan(&ch)
-			switch ch {
-			case 1:
-				player.Attack(mob)
-				slowPrint(fmt.Sprintf("%s attaque %s !", player.Name, mob.Name), 30*time.Millisecond)
-			case 2:
-				player.SpecialAttack(mob)
-				slowPrint(fmt.Sprintf("%s utilise une attaque spéciale !", player.Name), 30*time.Millisecond)
-			default:
-				player.Heal(20)
-				slowPrint(fmt.Sprintf("%s se soigne de 20 PV !", player.Name), 30*time.Millisecond)
+		}
+
+		// Actions du joueur
+		playerTurn := true // par défaut, on fait le tour du gobelin après le joueur
+		switch selected {
+		case 0:
+			damage := player.Attack(mob)
+			slowPrint(fmt.Sprintf("%s inflige %d dégâts à %s !", player.Name, damage, mob.Name), 30*time.Millisecond)
+		case 1:
+			damage := player.SpecialAttack(mob)
+			if damage > 0 {
+				slowPrint(fmt.Sprintf("%s inflige %d dégâts à %s !", player.Name, damage, mob.Name), 30*time.Millisecond)
 			}
+		case 2:
+			showInventory(player, playerInventory)
+			playerTurn = false // ouvrir l'inventaire ne passe pas le tour
+		case 3:
+			slowPrint("Vous fuyez le combat !", 50*time.Millisecond)
+			return
 		}
 
 		if mob.CurrentHP <= 0 {
@@ -203,26 +259,19 @@ func StartTraining() {
 			break
 		}
 
-		// Tour du sbire
-		slowPrint("=== Tour du Sbire ===", 50*time.Millisecond)
-		time.Sleep(300 * time.Millisecond)
-		switch rand.Intn(3) {
-		case 0:
-			mob.Attack(player)
-			slowPrint(fmt.Sprintf("%s attaque %s !", mob.Name, player.Name), 30*time.Millisecond)
-		case 1:
-			mob.SpecialAttack(player)
-			slowPrint(fmt.Sprintf("%s lance une attaque spéciale !", mob.Name), 30*time.Millisecond)
-		case 2:
-			mob.Heal(10)
-			slowPrint(fmt.Sprintf("%s se soigne de 10 PV !", mob.Name), 30*time.Millisecond)
-		}
+		// Tour du gobelin si le joueur a fait une action offensive
+		if playerTurn {
+			slowPrint(fmt.Sprintf("=== Tour du %s ===", mob.Name), 50*time.Millisecond)
+			time.Sleep(300 * time.Millisecond)
+			damage := mob.Attack(player)
+			slowPrint(fmt.Sprintf("%s inflige %d dégâts à %s !", mob.Name, damage, player.Name), 30*time.Millisecond)
 
-		if player.CurrentHP <= 0 {
-			slowPrint(player.Name+" a été vaincu !", 50*time.Millisecond)
-			break
+			if player.CurrentHP <= 0 {
+				slowPrint(player.Name+" a été vaincu !", 50*time.Millisecond)
+				break
+			}
+			time.Sleep(300 * time.Millisecond)
 		}
-		time.Sleep(300 * time.Millisecond)
 	}
 
 	fmt.Println("\nFin de l’entraînement.")
