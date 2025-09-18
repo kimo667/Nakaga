@@ -13,7 +13,7 @@ func main() {
 	player := createCharacterInteractive(reader)
 
 	// Boucle de jeu principale
-	for mainMenu(&player, reader) {
+	for mainMenu(&player, reader) { // ici on appelle la fonction menu, pas le type menuItem
 		// Sécurité: si le joueur tombe à 0 PV quelque part, on applique le revive T8
 		isDead(&player)
 	}
