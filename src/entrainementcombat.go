@@ -103,7 +103,7 @@ func (m *Monster) Heal(amount int) {
 var player Monster
 var monster Monster
 
-func main() {
+func RunCombat() {
 	rand.Seed(time.Now().UnixNano())
 
 	player = Monster{Name: "Joueur", MaxHP: 100, CurrentHP: 100, AttackPower: 20}
