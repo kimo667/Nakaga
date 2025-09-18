@@ -1,33 +1,30 @@
 package main
 
-// Bonus de PV max par équipement
+// Bonus de PV max selon l’équipement porté
 var equipHPBonus = map[string]int{
 	"Chapeau de l'aventurier": 10,
 	"Tunique de l'aventurier": 25,
 	"Bottes de l'aventurier":  15,
 }
 
-// Somme des bonus selon les pièces portées
-func equipmentHPBonus(c Character) int {
-	b := 0
-	if v, ok := equipHPBonus[c.Equipment.Head]; ok {
-		b += v
-	}
-	if v, ok := equipHPBonus[c.Equipment.Torso]; ok {
-		b += v
-	}
-	if v, ok := equipHPBonus[c.Equipment.Feet]; ok {
-		b += v
-	}
-	return b
-}
-
-// Recalcule HPMax (base + bonus) et “clamp” HP si besoin
+// Recalcule HPMax à partir de la base + bonus d’équipement, et ajuste HP si nécessaire
 func recalcHPMax(c *Character) {
-	if c.BaseHPMax == 0 { // sécurité si vieux perso
-		c.BaseHPMax = c.HPMax
+	bonus := 0
+
+	if c.Equipment.Head != "" {
+		bonus += equipHPBonus[normalizeItemName(c.Equipment.Head)]
 	}
-	c.HPMax = c.BaseHPMax + equipmentHPBonus(*c)
+	if c.Equipment.Torso != "" {
+		bonus += equipHPBonus[normalizeItemName(c.Equipment.Torso)]
+	}
+	if c.Equipment.Feet != "" {
+		bonus += equipHPBonus[normalizeItemName(c.Equipment.Feet)]
+	}
+
+	// HPMax = base nue + bonus d’équipement
+	c.HPMax = c.BaseHPMax + bonus
+
+	// Si les PV actuels dépassent le nouveau max, on les réduit
 	if c.HP > c.HPMax {
 		c.HP = c.HPMax
 	}
