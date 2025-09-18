@@ -50,10 +50,10 @@ func merchantMenu(c *Character) {
 		fmt.Println("2) Potion de vie — 3 or")
 		fmt.Println("3) Potion de poison — 6 or")
 		fmt.Println("4) Livre de Sort : Mur de vent — 25 or")
-		fmt.Println("5) Fourrure de Loup — 4 or")
-		fmt.Println("6) Peau de Troll — 7 or")
-		fmt.Println("7) Cuir de Sanglier — 3 or")
-		fmt.Println("8) Plume de Corbeau — 1 or")
+		fmt.Println("5) Fourrure d'Okami — 4 or")
+		fmt.Println("6) Peau d'Oni — 7 or")
+		fmt.Println("7) Cuir d'Inoshishi — 3 or")
+		fmt.Println("8) Plume de Karasu — 1 or")
 		fmt.Println("9) Augmentation d’inventaire — 30 or")
 		fmt.Println("10) Retour")
 		fmt.Print("> ")
@@ -87,16 +87,16 @@ func merchantMenu(c *Character) {
 			}
 
 		case "5":
-			_ = buyItem(c, "Fourrure de Loup", 4, 1)
+			_ = buyItem(c, "Fourrure d'Okami", 4, 1)
 
 		case "6":
-			_ = buyItem(c, "Peau de Troll", 7, 1)
+			_ = buyItem(c, "Peau d'Oni", 7, 1)
 
 		case "7":
-			_ = buyItem(c, "Cuir de Sanglier", 3, 1)
+			_ = buyItem(c, "Cuir d'Inoshishi", 3, 1)
 
 		case "8":
-			_ = buyItem(c, "Plume de Corbeau", 1, 1)
+			_ = buyItem(c, "Plume de Karasu", 1, 1)
 
 		case "9": // Augmentation d’inventaire
 			if c.InvUpgrades >= MaxInventoryUpgrades {
