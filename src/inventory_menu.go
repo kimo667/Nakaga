@@ -48,8 +48,12 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 		}
 
 		// --- ÉQUIPEMENT : “Équiper …” pour chaque objet équipable possédé ---
-		for item := range equipSlotByItem {
-			if c.Inventory[item] > 0 {
+		// --- ÉQUIPEMENT : proposer "Équiper ..." pour chaque objet équipable trouvé dans l'inventaire ---
+		for item, qty := range c.Inventory {
+			if qty <= 0 {
+				continue
+			}
+			if _, ok := slotForItem(item); ok {
 				it := item // capture
 				add("Équiper "+it, func() { equipItem(c, it) })
 			}
