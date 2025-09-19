@@ -1,8 +1,6 @@
 package main
 
-import (
-	"sort"
-)
+import "sort"
 
 /* ====== Skills ====== */
 

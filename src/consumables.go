@@ -14,36 +14,44 @@ func takeRedBull(c *Character) {
 	}
 	before := c.HP
 	c.HP = clamp(c.HP+HealRedBull, 0, c.HPMax)
-	fmt.Printf(CCyan+"Tu as bu une RedBull !"+CReset+" PV: %d → "+CGreen+"%d/%d"+CReset+"\n", before, c.HP, c.HPMax)
+	fmt.Printf(CGreen+"Glou glou ! PV: %d → %d"+CReset+"\n", before, c.HP)
 }
 
 func usePotionVie(c *Character) {
 	if !removeInventory(c, "Potion de vie", 1) {
-		fmt.Println(CRed + "Pas de Potion de vie." + CReset)
+		fmt.Println(CRed + "Pas de Potion de vie !" + CReset)
 		return
 	}
 	before := c.HP
-	c.HP = clamp(c.HP+20, 0, c.HPMax)
-	fmt.Printf(CCyan+"Vous buvez une Potion de vie."+CReset+" PV: %d → "+CGreen+"%d/%d"+CReset+"\n", before, c.HP, c.HPMax)
+	c.HP = clamp(c.HP+HealPotionVie, 0, c.HPMax)
+	fmt.Printf(CGreen+"Gorgée de potion ! PV: %d → %d"+CReset+"\n", before, c.HP)
 }
 
-func poisonPot(c *Character) {
-	if !removeInventory(c, "Potion de poison", 1) {
-		fmt.Println(CRed + "Vous n'avez pas de Potion de poison." + CReset)
+func useManaPotion(c *Character) { // Mission 4
+	if !removeInventory(c, "Potion de mana", 1) {
+		fmt.Println(CRed + "Pas de Potion de mana !" + CReset)
 		return
 	}
-	fmt.Println(CCyan + "Vous utilisez une Potion de poison…" + CReset)
-	for i := 1; i <= PoisonTicks; i++ {
-		before := c.HP
-		c.HP = clamp(c.HP-PoisonDamagePerSec, 0, c.HPMax)
-		fmt.Printf("Effet poison %d/%d → PV: %d → %d/%d\n", i, PoisonTicks, before, c.HP, c.HPMax)
-		if isDead(c) { // revive + stop poison
-			fmt.Println(CRed + "L'effet du poison est interrompu suite à votre mort." + CReset)
-			return
-		}
-		time.Sleep(1 * time.Second)
+	before := c.Mana
+	c.Mana = clamp(c.Mana+ManaPotRestore, 0, c.ManaMax)
+	fmt.Printf(CGreen+"Surcharge d’éther ! Mana: %d → %d"+CReset+"\n", before, c.Mana)
+}
+
+// Potion de poison : applique 3 ticks de 10 dégâts sur ~1.5s
+func poisonPot(c *Character) {
+	if !removeInventory(c, "Potion de poison", 1) {
+		fmt.Println(CRed + "Pas de Potion de poison !" + CReset)
+		return
 	}
-	fmt.Printf(CCyan+"L'effet du poison est terminé. PV restants : %d/%d"+CReset+"\n", c.HP, c.HPMax)
+	fmt.Println(CYellow + "Vous vous empoisonnez volontairement (pour tester)..." + CReset)
+	for i := 0; i < PoisonTicks; i++ {
+		time.Sleep(500 * time.Millisecond)
+		c.HP -= PoisonDamagePerSec
+		fmt.Printf(CRed+"[Poison] -%d PV (reste %d/%d)"+CReset+"\n", PoisonDamagePerSec, c.HP, c.HPMax)
+		if isDead(c) {
+			break
+		}
+	}
 }
 
 func useSpellBookWind(c *Character) {

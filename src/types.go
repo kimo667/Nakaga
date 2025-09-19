@@ -8,36 +8,79 @@ const (
 	ClasseNinja   Classe = "Ninja"
 )
 
+// Inventaire
 const (
 	BaseInventoryCap     = 10
 	InventoryUpgradeStep = 10
 	MaxInventoryUpgrades = 3
-
-	HealRedBull        = 20
-	PoisonTicks        = 3
-	PoisonDamagePerSec = 10
 )
 
-// --------- ÉQUIPEMENT (slots) ----------
+// Consommables / effets
+const (
+	HealRedBull        = 20
+	HealPotionVie      = 20
+	PoisonTicks        = 3
+	PoisonDamagePerSec = 10
+	ManaPotRestore     = 15 // (Mission 4)
+)
+
+// États de mission
+type MissionState int
+
+const (
+	NotStarted MissionState = iota
+	InProgress
+	Completed
+)
+
 type Equipment struct {
-	Head  string // tête
-	Torso string // torse
-	Feet  string // pieds
+	Head  string // Tête
+	Torso string // Torse
+	Feet  string // Pieds
 }
 
-// --------- PERSONNAGE ----------
+type Mission struct {
+	ID          int
+	Title       string
+	Description string
+	State       MissionState
+
+	RequiredTrainKills int
+	TrainKills         int
+
+	RewardGold        int
+	RewardItem        string
+	RewardSkill       string
+	RewardUpgradeSlot bool
+}
+
 type Character struct {
-	Name        string
-	Class       Classe
-	Level       int
-	HPMax       int
-	HP          int
-	BaseHPMax   int // base “nue” (sans bonus d’équipement)
+	Name  string
+	Class Classe
+	Level int
+
+	// Pv
+	HPMax     int
+	HP        int
+	BaseHPMax int
+
+	// Initiative (Mission 1)
+	Initiative int
+
+	// XP / niveau (Mission 2)
+	XP    int
+	XPMax int
+
+	// Mana (Mission 4)
+	Mana    int
+	ManaMax int
+
 	Inventory   map[string]int
 	Skills      []string
 	Gold        int
 	CapMax      int
 	InvUpgrades int
 
-	Equipment Equipment // <<< DOIT exister
+	Equipment Equipment
+	Missions  []Mission
 }

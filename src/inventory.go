@@ -1,8 +1,6 @@
 package main
 
-import (
-	"fmt"
-)
+import "fmt"
 
 /* ====== Inventaire : capacité & upgrades ====== */
 
@@ -60,23 +58,3 @@ func upgradeInventorySlot(c *Character) bool {
 		c.CapMax, c.InvUpgrades, MaxInventoryUpgrades)
 	return true
 }
-
-/* ====== Affichage de l’inventaire ====== */
-
-//func displayInventory(c Character) {
-//keys := make([]string, 0, len(c.Inventory))
-//for k, v := range c.Inventory {
-//if v > 0 {
-//	keys = append(keys, k)
-//}
-//}
-//sort.Strings(keys)
-//fmt.Printf(CYellow+"Inventaire (%d/%d) :"+CReset+"\n", totalItems(c), c.CapMax)
-//if len(keys) == 0 {
-//fmt.Println("  (vide)")
-//	return
-//}
-//	for _, k := range keys {
-//		fmt.Printf("  - %s x%d\n", k, c.Inventory[k])
-//	}
-//}

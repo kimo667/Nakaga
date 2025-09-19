@@ -14,19 +14,10 @@ func equipmentMenu(c *Character, r *bufio.Reader) {
 		fmt.Println("\n===== ÉQUIPEMENT =====")
 		// état actuel
 		fmt.Println("Actuellement portés :")
-		show := func(lbl, v string) {
-			if v == "" {
-				fmt.Printf("  %-5s : (aucun)\n", lbl)
-			} else {
-				fmt.Printf("  %-5s : %s\n", lbl, v)
-			}
-		}
-		show("Tête", c.Equipment.Head)
-		show("Torse", c.Equipment.Torso)
-		show("Pieds", c.Equipment.Feet)
-		fmt.Printf("PV max actuel : %d\n", c.HPMax)
+		fmt.Printf("  Tête : %s\n", orNone(c.Equipment.Head))
+		fmt.Printf("  Torse: %s\n", orNone(c.Equipment.Torso))
+		fmt.Printf("  Pieds: %s\n", orNone(c.Equipment.Feet))
 
-		// options dynamiques
 		type opt struct {
 			key, label string
 			run        func()
@@ -40,15 +31,17 @@ func equipmentMenu(c *Character, r *bufio.Reader) {
 			})
 		}
 
-		// Proposer d'équiper tous les objets équipables possédés
-		for item, slot := range equipSlotByItem {
-			if c.Inventory[item] > 0 {
-				it, sl := item, slot // capture
-				add("Équiper "+it+" ("+sl+")", func() { equipItem(c, it) })
+		// proposer d'équiper chaque item équipable possédé
+		for item, qty := range c.Inventory {
+			if qty <= 0 {
+				continue
+			}
+			if _, ok := slotForItem(item); ok {
+				it := item
+				add("Équiper "+it, func() { equipItem(c, it) })
 			}
 		}
-
-		// Proposer de déséquiper chaque slot si occupé
+		// déséquiper
 		if c.Equipment.Head != "" {
 			add("Déséquiper (Tête)", func() { unequipSlot(c, "Head") })
 		}
@@ -59,9 +52,8 @@ func equipmentMenu(c *Character, r *bufio.Reader) {
 			add("Déséquiper (Pieds)", func() { unequipSlot(c, "Feet") })
 		}
 
-		// Affichage
 		if len(opts) == 0 {
-			fmt.Println("(Aucune action : aucun objet équipable dans l’inventaire.)")
+			fmt.Println("(Aucune action disponible)")
 		} else {
 			for _, o := range opts {
 				fmt.Printf("%s) %s\n", o.key, o.label)
@@ -69,9 +61,8 @@ func equipmentMenu(c *Character, r *bufio.Reader) {
 		}
 		fmt.Println("9) Retour")
 
-		// Saisie
 		choice := readChoice(r)
-		if choice == "9" || choice == "retour" || choice == "back" {
+		if choice == "9" {
 			return
 		}
 		ok := false
@@ -86,4 +77,11 @@ func equipmentMenu(c *Character, r *bufio.Reader) {
 			fmt.Println("Choix invalide.")
 		}
 	}
+}
+
+func orNone(s string) string {
+	if s == "" {
+		return "(aucun)"
+	}
+	return s
 }

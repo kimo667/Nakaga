@@ -3,102 +3,138 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 	"unicode"
 )
 
 // ====== Initialisation du personnage ======
-//
-// - Copie l’inventaire de départ SANS dépasser la capacité
-// - Donne 100 or au départ (T11)
-// - Capacité de base = BaseInventoryCap (T12+)
-// - Apprend la technique de base "Tempête d'acier"
 func initCharacter(name string, class Classe, level, hpMax, hp int, inv map[string]int) Character {
-	ch := Character{
-		Name:        name,
-		Class:       class,
-		Level:       level,
-		HPMax:       hpMax,
-		HP:          clamp(hp, 0, hpMax),
-		Inventory:   map[string]int{},
-		Skills:      []string{},
-		Gold:        100,
-		CapMax:      BaseInventoryCap,
-		InvUpgrades: 0,
-	}
+	c := Character{
+		Name:      name,
+		Class:     class,
+		Level:     level,
+		HPMax:     hpMax,
+		HP:        hp,
+		BaseHPMax: hpMax,
 
-	ch.BaseHPMax = hpMax
-	// Copie sécurisée de l’inventaire (respect de l
-	// a capacité)
-	for k, v := range inv {
-		if v <= 0 {
-			continue
-		}
-		if !addInventory(&ch, k, v) { // addInventory sera défini dans inventory.go
-			break
-		}
-	}
+		Initiative: 0,
+		XP:         0,
+		XPMax:      50,
+		Mana:       0,
+		ManaMax:    0,
 
-	// Technique de base
-	_ = learnSkill(&ch, "Tempête d'acier") // learnSkill sera défini dans skills.go
-	return ch
+		Inventory: map[string]int{},
+		Skills:    []string{},
+		Gold:      100,
+		CapMax:    BaseInventoryCap,
+	}
+	for it, q := range inv {
+		_ = addInventory(&c, it, q)
+	}
+	_ = learnSkill(&c, "Tempête d'acier")
+
+	// Mana de base selon classe (Mission 4)
+	switch class {
+	case ClasseHumain:
+		c.ManaMax = 30
+	case ClasseSamurai:
+		c.ManaMax = 20
+	case ClasseNinja:
+		c.ManaMax = 40
+	}
+	c.Mana = c.ManaMax
+
+	// Initiative de départ
+	rand.Seed(time.Now().UnixNano())
+	c.Initiative = rollInitiative(10)
+
+	ensureMissions(&c)
+	return c
 }
 
-// ====== Création interactive (nom + classe) ======
+// jet d’initiative
+func rollInitiative(base int) int { return base + rand.Intn(10) }
 
-// Création interactive d’un personnage
-func createCharacterInteractive(r *bufio.Reader) Character {
-	// 1) Nom du perso (prompt unique via readLine)
-	rawName := readLine(r, "Entrez le nom de votre personnage : ")
-	name := strings.TrimSpace(rawName)
-	if name == "" {
-		name = "Yazuo" // nom par défaut si l'utilisateur valide sans rien
-	} else {
-		// Majuscule sur la première lettre, le reste inchangé
-		runes := []rune(name)
-		runes[0] = unicode.ToUpper(runes[0])
-		name = string(runes)
+// Gain d’XP + montée de niveau (Mission 2)
+func addXP(c *Character, amount int) {
+	if amount <= 0 {
+		return
 	}
+	c.XP += amount
+	lvlUp := false
+	for c.XP >= c.XPMax {
+		c.XP -= c.XPMax
+		c.Level++
+		lvlUp = true
+		// boost simple
+		c.BaseHPMax += 10
+		recalcHPMax(c)
+		c.HP = c.HPMax
+		c.XPMax = int(float64(c.XPMax)*1.3 + 5)
+	}
+	if lvlUp {
+		fmt.Printf(CGreen+"Niveau augmenté ! Vous êtes niv. %d. PV max: %d"+CReset+"\n", c.Level, c.HPMax)
+	}
+}
 
-	// 2) Choix de classe — texte “comme avant”
-	fmt.Println("Choisissez une classe :")
-	fmt.Println("1) Humain ")
-	fmt.Println("2) Samurai ")
-	fmt.Println("3) Ninja   ")
-	classChoice := readChoice(r)
+// ====== Création interactive ======
+func createCharacterInteractive(r *bufio.Reader) Character {
+	fmt.Println(CCyan + "=== Création du personnage ===" + CReset)
+	name := readLine(r, "Ton nom, voyageur du vent ? ")
+	for name == "" {
+		fmt.Println(CRed + "Le nom ne doit pas être vide." + CReset)
+		name = readLine(r, "Ton nom, voyageur du vent ? ")
+	}
+	name = strings.TrimSpace(name)
 
+	fmt.Println("Choisis ta voie : 1) Humain  2) Samurai  3) Ninja")
 	var class Classe
-	switch classChoice {
+	switch readChoice(r) {
 	case "1", "humain":
 		class = ClasseHumain
-	case "2", "samurai":
+	case "2", "samurai", "samouraï":
 		class = ClasseSamurai
 	case "3", "ninja":
 		class = ClasseNinja
 	default:
-		fmt.Println(CRed + "Choix invalide. Classe par défaut : Humain." + CReset)
 		class = ClasseHumain
 	}
 
-	// 3) PV init selon classe (tu peux remettre tes valeurs d’avant)
-	hpMax := 110
+	base := 0
 	switch class {
+	case ClasseHumain:
+		base = 100
 	case ClasseSamurai:
-		hpMax = 175
+		base = 120
 	case ClasseNinja:
-		hpMax = 90
+		base = 90
 	}
+	hpMax := base
+	hp := base
+	name = sanitizeName(name)
 
-	// 4) Inventaire de départ (à ta convenance)
 	inv := map[string]int{
 		"Potion de vie": 1,
+		"RedBull":       1,
 	}
 
-	// 5) Création du perso
-	player := initCharacter(name, class, 1, hpMax, hpMax, inv)
-
-	// (si tu veux un petit message fin)
+	player := initCharacter(name, class, 1, hpMax, hp, inv)
 	fmt.Println(CGreen + "Personnage créé !" + CReset)
-
 	return player
+}
+
+func sanitizeName(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == ' ' || r == '-' || r == '_' {
+			b.WriteRune(r)
+		}
+	}
+	out := strings.TrimSpace(b.String())
+	if out == "" {
+		return "Rônin"
+	}
+	return out
 }

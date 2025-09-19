@@ -49,13 +49,14 @@ func merchantMenu(c *Character) {
 		fmt.Println("1) RedBull — GRATUIT")
 		fmt.Println("2) Potion de vie — 3 or")
 		fmt.Println("3) Potion de poison — 6 or")
-		fmt.Println("4) Livre de Sort : Mur de vent — 25 or")
-		fmt.Println("5) Fourrure d'Okami — 4 or")
-		fmt.Println("6) Peau d'Oni — 7 or")
-		fmt.Println("7) Cuir d'Inoshishi — 3 or")
-		fmt.Println("8) Plume de Karasu — 1 or")
-		fmt.Println("9) Augmentation d’inventaire — 30 or")
-		fmt.Println("10) Retour")
+		fmt.Println("4) Potion de mana — 4 or")
+		fmt.Println("5) Livre de Sort : Mur de vent — 25 or")
+		fmt.Println("6) Fourrure d'Okami — 4 or")
+		fmt.Println("7) Peau d'Oni — 7 or")
+		fmt.Println("8) Cuir d'Inoshishi — 3 or")
+		fmt.Println("9) Plume de Karasu — 1 or")
+		fmt.Println("10) Augmentation d’inventaire — 30 or")
+		fmt.Println("11) Retour")
 		fmt.Print("> ")
 
 		choice := readChoice(r)
@@ -78,6 +79,9 @@ func merchantMenu(c *Character) {
 			_ = buyItem(c, "Potion de poison", 6, 1)
 
 		case "4":
+			_ = buyItem(c, "Potion de mana", 4, 1)
+
+		case "5":
 			if windBookStock <= 0 {
 				fmt.Println(CRed + "Le Livre de Sort : Mur de vent n’est plus disponible." + CReset)
 				break
@@ -86,19 +90,19 @@ func merchantMenu(c *Character) {
 				windBookStock--
 			}
 
-		case "5":
+		case "6":
 			_ = buyItem(c, "Fourrure d'Okami", 4, 1)
 
-		case "6":
+		case "7":
 			_ = buyItem(c, "Peau d'Oni", 7, 1)
 
-		case "7":
+		case "8":
 			_ = buyItem(c, "Cuir d'Inoshishi", 3, 1)
 
-		case "8":
+		case "9":
 			_ = buyItem(c, "Plume de Karasu", 1, 1)
 
-		case "9": // Augmentation d’inventaire
+		case "10": // Augmentation d’inventaire
 			if c.InvUpgrades >= MaxInventoryUpgrades {
 				fmt.Printf(CYellow+"Limite d’améliorations atteinte (%d/%d)."+CReset+"\n", c.InvUpgrades, MaxInventoryUpgrades)
 				break
@@ -112,13 +116,11 @@ func merchantMenu(c *Character) {
 				c.Gold += 30
 			}
 
-		case "10", "0", "retour", "back":
+		case "11", "0", "retour", "back":
 			return
 
 		default:
 			fmt.Println(CRed + "Choix invalide." + CReset)
 		}
-
-		// aucune pause : on reboucle directement et on réaffiche le menu
 	}
 }

@@ -12,66 +12,78 @@ var forgeRecipes = map[string]map[string]int{
 		"Cuir d'Inoshishi": 1,
 	},
 	"Veste du Shinobi": {
-		"Fourrure d'Okam": 2,
-		"Peau d'Oni":      1,
+		"Fourrure d'Okami": 2,
+		"Peau d'Oni":       1,
 	},
-	"Tabi du Shinobi": {
-		"Fourrure d'Okam":  1,
+	"Bottes du Shinobi": {
 		"Cuir d'Inoshishi": 1,
+		"Plume de Karasu":  1,
+	},
+	// Set aventurier (équipable)
+	"Chapeau de l'aventurier": {
+		"Plume de Karasu":  1,
+		"Cuir d'Inoshishi": 1,
+	},
+	"Tunique de l'aventurier": {
+		"Fourrure d'Okami": 1,
+		"Peau d'Oni":       1,
+	},
+	"Bottes de l'aventurier": {
+		"Fourrure d'Okami": 1,
+		"Plume de Karasu":  1,
 	},
 }
 
-// Vérifie si le joueur a les ressources nécessaires
-func hasResources(c *Character, recipe map[string]int) bool {
-	for item, qty := range recipe {
-		if c.Inventory[item] < qty {
+// Vérifie si toutes les ressources sont présentes
+func hasResources(c Character, recipe map[string]int) bool {
+	for it, q := range recipe {
+		if c.Inventory[it] < q {
 			return false
 		}
 	}
 	return true
 }
 
-// Consomme les ressources du joueur
+// Consomme les ressources
 func consumeResources(c *Character, recipe map[string]int) {
-	for item, qty := range recipe {
-		removeInventory(c, item, qty)
+	for it, q := range recipe {
+		removeInventory(c, it, q)
 	}
 }
 
-// Menu du forgeron
 func blacksmithMenu(c *Character, r *bufio.Reader) {
 	for {
-		fmt.Println("\n=== FORGERON ===")
-		fmt.Printf("Votre or : %d\n", c.Gold)
-		fmt.Println("Que voulez-vous fabriquer ? (5 or par objet)")
-
-		idx := 1
-		itemList := []string{}
+		fmt.Println(CYellow + "\n=== FORGERON ===" + CReset)
+		fmt.Println("Chaque craft coûte 5 or en plus des matériaux.")
+		fmt.Println("Ressources :")
+		for _, res := range []string{"Fourrure d'Okami", "Peau d'Oni", "Cuir d'Inoshishi", "Plume de Karasu"} {
+			fmt.Printf("  - %-20s x%d\n", res, c.Inventory[res])
+		}
+		fmt.Println("\nRecettes disponibles :")
+		i := 1
+		items := []string{}
 		for item := range forgeRecipes {
-			fmt.Printf("%d) %s\n", idx, item)
-			itemList = append(itemList, item)
-			idx++
+			fmt.Printf("  %d) %s\n", i, item)
+			items = append(items, item)
+			i++
 		}
 		fmt.Println("9) Retour")
 
-		choice := readChoice(r)
-		if choice == "9" || choice == "retour" || choice == "back" {
+		ch := readChoice(r)
+		if ch == "9" {
 			return
 		}
-
-		var selected int
-		fmt.Sscanf(choice, "%d", &selected)
-
-		if selected >= 1 && selected <= len(itemList) {
-			item := itemList[selected-1]
+		var idx int
+		fmt.Sscanf(ch, "%d", &idx)
+		if idx >= 1 && idx <= len(items) {
+			item := items[idx-1]
 			recipe := forgeRecipes[item]
-
-			if c.Gold < 5 {
-				fmt.Println("Pas assez d’or pour fabriquer cet objet !")
+			if !hasResources(*c, recipe) {
+				fmt.Println(CRed + "Matériaux insuffisants." + CReset)
 				continue
 			}
-			if !hasResources(c, recipe) {
-				fmt.Println("Ressources insuffisantes pour fabriquer :", item)
+			if c.Gold < 5 {
+				fmt.Println(CRed + "Or insuffisant." + CReset)
 				continue
 			}
 

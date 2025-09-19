@@ -23,7 +23,7 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 			})
 		}
 
-		// --- Consommables / livres : n’afficher que si possédés ---
+		// Consommables / livres : n’afficher que si possédés
 		if c.Inventory["RedBull"] > 0 {
 			add("Boire une RedBull (+20 PV)", func() {
 				takeRedBull(c)
@@ -34,6 +34,11 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 			add("Boire une Potion de vie (+20 PV)", func() {
 				usePotionVie(c)
 				isDead(c)
+			})
+		}
+		if c.Inventory["Potion de mana"] > 0 {
+			add("Boire une Potion de mana (+15 Mana)", func() {
+				useManaPotion(c)
 			})
 		}
 		if c.Inventory["Potion de poison"] > 0 {
@@ -47,19 +52,18 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 			})
 		}
 
-		// --- ÉQUIPEMENT : “Équiper …” pour chaque objet équipable possédé ---
-		// --- ÉQUIPEMENT : proposer "Équiper ..." pour chaque objet équipable trouvé dans l'inventaire ---
+		// ÉQUIPEMENT : “Équiper …” pour chaque objet équipable possédé
 		for item, qty := range c.Inventory {
 			if qty <= 0 {
 				continue
 			}
 			if _, ok := slotForItem(item); ok {
-				it := item // capture
+				it := item
 				add("Équiper "+it, func() { equipItem(c, it) })
 			}
 		}
 
-		// --- Déséquiper si quelque chose est porté ---
+		// Déséquiper si quelque chose est porté
 		if c.Equipment.Head != "" {
 			add("Déséquiper (Tête)", func() { unequipSlot(c, "Head") })
 		}
@@ -70,7 +74,6 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 			add("Déséquiper (Pieds)", func() { unequipSlot(c, "Feet") })
 		}
 
-		// Affichage du sous-menu
 		if len(opts) == 0 {
 			fmt.Println("(Aucune action disponible)")
 		} else {
@@ -80,7 +83,6 @@ func inventoryMenu(c *Character, r *bufio.Reader) {
 		}
 		fmt.Println("9) Retour")
 
-		// Lecture et exécution
 		ch := readChoice(r)
 		if ch == "9" || ch == "retour" || ch == "back" {
 			return

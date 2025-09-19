@@ -50,22 +50,23 @@ func displayInfo(c Character) {
 ⠀⠀⢸⡇⣿⣿⣿⣿⣿⡏⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⢰⣶⣶⣶⣾⣿⢃⣿⣿⣿⣿⣯⣿⣭⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 `
-	fmt.Println(asciiArt)
+	fmt.Println(CCyan + asciiArt + CReset)
+
 	fmt.Println(CYellow + "=== Informations du personnage ===" + CReset)
 	fmt.Printf(CYellow+"Nom   : "+CReset+"%s\n", c.Name)
 	fmt.Printf(CYellow+"Classe: "+CReset+"%s\n", c.Class)
-	fmt.Printf(CYellow+"Niveau: "+CReset+"%d\n", c.Level)
-	fmt.Printf(CGreen+"PV    : "+CReset+CGreen+"%d/%d"+CReset+"\n", c.HP, c.HPMax)
+	fmt.Printf(CYellow+"Niveau: "+CReset+"%d  "+CYellow+"XP:"+CReset+" %d/%d\n", c.Level, c.XP, c.XPMax)
 	fmt.Printf(CYellow+"Or    : "+CReset+"%d\n", c.Gold)
-	fmt.Printf(CYellow+"Capacité: "+CReset+"%d/%d (améliorations: %d/%d)\n",
-		totalItems(c), c.CapMax, c.InvUpgrades, MaxInventoryUpgrades)
+	fmt.Printf(CYellow+"PV    : "+CReset+"%d/%d\n", c.HP, c.HPMax)
+	fmt.Printf(CYellow+"Mana  : "+CReset+"%d/%d\n", c.Mana, c.ManaMax)
+	fmt.Printf(CYellow+"Capac.: "+CReset+"%d (%d upgrades)\n", c.CapMax, c.InvUpgrades)
 
-	fmt.Println(CYellow + "Compétences :" + CReset)
+	fmt.Println("Compétences :")
 	if len(c.Skills) == 0 {
-		fmt.Println("  (aucune technique)")
+		fmt.Println("  (aucune)")
 	} else {
 		for _, s := range c.Skills {
-			fmt.Println("  - " + s)
+			fmt.Println("  -", s)
 		}
 	}
 
